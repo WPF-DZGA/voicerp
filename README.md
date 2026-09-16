@@ -115,6 +115,49 @@ Where Piper has no female voice for a language (German, Portuguese, Romanian,
 Bulgarian, Latvian, Slovenian, Albanian, Arabic, Farsi) the entry is male. That
 is a catalogue limit, not a setting. `F11` prints the gender of each voice.
 
+## What you need to run it
+
+Measured, not estimated from file sizes. VoiceRP costs **0.84-1.12 GB VRAM**,
+**0.9 GB RAM** with whisper loaded and **2.4 GB** with five languages and five
+voices warm.
+
+Arma Reforger asks for a GTX 1650 / 8 GB minimum. Running both together is what
+sets the floor:
+
+| | Minimum for game + translation | Comfortable |
+|---|---|---|
+| GPU | 6 GB VRAM (GTX 1660 Super, RTX 2060) | 8-12 GB (RTX 3060, RTX 4060) |
+| CPU | 6 cores | 8 cores or more |
+| RAM | **16 GB** | 32 GB |
+| Disk | 25 GB free, SSD | SSD |
+
+whisper wants ~1 GB of VRAM the game would otherwise use, so a 4 GB card starts
+swapping textures; 8 GB of system RAM is not viable because Reforger alone asks
+for it. On a 4 GB card or no GPU, put whisper on the CPU - ~1.2 s per phrase
+instead of ~0.2 s, and it needs two cores flat out for that second.
+
+Install size: **≈ 3.5 GB for 6 languages**, ≈ 10.8 GB for all 37. The big items
+are the Argos packs (~120 MB per direction), the Piper voices (64 MB each) and
+the CUDA runtime (2 GB, skippable for CPU-only).
+
+### Slim install: 839 MB smaller
+
+`requirements-slim.txt` drops torch, spacy, scipy, blis, thinc, sympy and
+stanza. argostranslate only wants stanza for sentence splitting and ships
+MiniSBD too, so `voicerp_core.prefer_minisbd()` sets
+`ARGOS_CHUNK_TYPE=MINISBD` and puts `translate/shims/` at the end of
+`sys.path`, where a stub satisfies argos's unguarded `import stanza`. The stub
+is only reachable when torch is genuinely absent, so a full install is
+unaffected.
+
+Verified with all seven packages removed: whisper still on CUDA, 37 languages
+intact, multi-sentence input still split correctly.
+
+```powershell
+pip install -r requirements-slim.txt --no-deps   # --no-deps, or argos re-drags torch in
+pip install -r requirements-slim.txt
+```
+
 ## Hardware this was built and measured on
 
 - RTX 4080, i9-13900KF, 64 GB - whisper on the GPU at ~140-250 ms
@@ -132,7 +175,7 @@ can follow the same file.
 
 ```powershell
 # 1. VB-Audio Virtual Cable        https://vb-audio.com/Cable/
-# 2. python -m venv venv ; venv\Scripts\pip install -r requirements.txt
+# 2. python -m venv venv ; venv\Scripts\pip install -r requirements.txt + requirements-slim.txt
 # 3. python translate\getvoices.py       # ~2.5 GB of Piper voices
 # 4. python translate\getargos.py        # 37 Argos translation packs
 # 5. python translate\validate_langs.py  # confirm every language speaks

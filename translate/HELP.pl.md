@@ -10,6 +10,43 @@ słuchają kabla.
 
 ---
 
+## 0. Co jest potrzebne, aby to uruchomić
+
+Zmierzone na maszynie referencyjnej, nie oszacowane z rozmiarów plików modeli:
+
+| | Koszt VoiceRP |
+|---|---|
+| VRAM (whisper `small` float16 na CUDA) | **0,84 – 1,12 GB** |
+| RAM, whisper wczytany | **0,9 GB** |
+| RAM, 5 języków + 5 głosów rozgrzanych | **2,4 GB** |
+| Dysk, 6 języków | **≈ 3,5 GB** (whisper 464 MB, głosy po 64 MB, Argos ≈ 1 GB, Python z zależnościami ≈ 2,4 GB) |
+| Dysk, wszystkie 37 języków | **≈ 10,8 GB** |
+
+Arma Reforger wymaga minimalnie Core i5-4460 i GTX 1650, zalecane Core i7-6700
+i GTX 1070 Ti, 8/16 GB RAM oraz 15–20 GB dysku. Prawdziwą granicę wyznacza
+uruchomienie obu rzeczy jednocześnie:
+
+| | Minimum na grę + tłumaczenie | Komfortowo |
+|---|---|---|
+| Karta graficzna | 6 GB VRAM (GTX 1660 Super, RTX 2060) | 8–12 GB (RTX 3060, RTX 4060) |
+| Procesor | 6 rdzeni | 8 rdzeni lub więcej |
+| RAM | **16 GB** | 32 GB |
+| Dysk | 25 GB wolnego, SSD | SSD |
+
+Dlaczego minimum jest wyższe niż wymagania samej gry: whisper zajmuje około
+1 GB VRAM, którego gra by użyła, więc karta 4 GB zaczyna przerzucać tekstury.
+8 GB RAM nie wystarczy – sama Reforger tyle wymaga, a VoiceRP dokłada 2,4 GB.
+
+**Brak karty albo karta 4 GB**: przestaw whispera na procesor i zostaw VRAM
+grze. Kosztuje to około 1,2 s na frazę zamiast 0,2 s na referencyjnym
+i9-13900KF i na tę sekundę zajmuje mniej więcej dwa rdzenie – na maszynie
+czterordzeniowej gra będzie się zacinać w tym czasie. Da się grać, jeśli
+mówisz między kontaktami; w trakcie kontaktu będzie przeszkadzać.
+
+Pierwsza fraza w nowym języku jest wolniejsza: **2,2 – 3,5 s**, bo model Argos
+i głos Piper wczytują się na żądanie. Potem jest to ~650 ms. GUI rozgrzewa na
+starcie rosyjski, ukraiński, hiszpański, francuski, polski i angielski.
+
 ## 1. Szybki start
 
 1. `voicerp-gui.bat`

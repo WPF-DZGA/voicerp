@@ -1,0 +1,48 @@
+# Slim install: same behaviour, 839 MB smaller than requirements.txt.
+#
+# What is missing compared to the full file: torch, spacy, scipy, blis, thinc,
+# sympy and stanza. argostranslate only wants them for sentence splitting via
+# stanza, and it ships MiniSBD as well - so voicerp_core sets
+# ARGOS_CHUNK_TYPE=MINISBD and adds translate/shims to the end of sys.path,
+# where a stub satisfies argos's unguarded `import stanza`.
+#
+# Verified on the reference rig: whisper still on CUDA, 37 languages, and
+# multi-sentence input still splits correctly.
+#
+#   pip install -r requirements-slim.txt --no-deps
+#   pip install -r requirements-slim.txt        # then resolve the rest
+#
+# --no-deps matters: a plain install re-drags torch in through argostranslate.
+
+# --- speech to text ---
+faster-whisper==1.2.1
+ctranslate2==4.6.0
+av==15.1.0
+tokenizers
+huggingface-hub
+
+# --- translation (no stanza / torch) ---
+argostranslate==1.11.0
+minisbd
+sentencepiece
+sacremoses
+packaging
+
+# --- text to speech ---
+piper-tts==1.8.0
+onnxruntime==1.23.0
+espeakng-loader
+piper-phonemize-cross
+
+# --- audio and input ---
+sounddevice==0.5.2
+numpy
+pynput==1.8.2
+
+# --- diagnostics (optional, tools/ and footprint.py) ---
+psutil
+
+# --- CUDA runtime, ~2 GB. Drop both lines for a CPU-only install:
+# --- whisper then falls back automatically, ~1.2 s instead of ~0.2 s.
+nvidia-cublas-cu12
+nvidia-cudnn-cu12

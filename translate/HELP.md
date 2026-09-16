@@ -8,6 +8,44 @@ real mic itself and writes into a virtual cable. Apps listen to the cable.
 
 ---
 
+## 0. What you need to run this
+
+Measured on the reference rig, not estimated from model file sizes:
+
+| | VoiceRP costs |
+|---|---|
+| VRAM (whisper `small` float16 on CUDA) | **0.84 - 1.12 GB** |
+| RAM, whisper loaded | **0.9 GB** |
+| RAM, 5 languages + 5 voices warm | **2.4 GB** |
+| Disk, 6 languages | **≈ 3.5 GB** (whisper 464 MB, voices 64 MB each, Argos ≈ 1 GB, Python + deps ≈ 2.4 GB) |
+| Disk, all 37 languages | **≈ 10.8 GB** |
+
+Arma Reforger asks for a Core i5-4460 and a GTX 1650 at minimum, a Core i7-6700
+and a GTX 1070 Ti recommended, 8/16 GB RAM, and 15-20 GB of disk. Running both
+at once is what sets the real floor:
+
+| | Minimum for game + translation | Comfortable |
+|---|---|---|
+| GPU | 6 GB VRAM (GTX 1660 Super, RTX 2060) | 8-12 GB (RTX 3060, RTX 4060) |
+| CPU | 6 cores | 8 cores or more |
+| RAM | **16 GB** | 32 GB |
+| Disk | 25 GB free, SSD | SSD |
+
+Why the minimum is above the game's own: whisper wants ~1 GB of VRAM that the
+game would otherwise use, so a 4 GB card ends up swapping textures. 8 GB of
+system RAM is not viable - Reforger alone asks for that much, and VoiceRP adds
+2.4 GB on top.
+
+**No GPU, or a 4 GB card**: set whisper to CPU and leave VRAM to the game. It
+costs about 1.2 s per phrase instead of 0.2 s on the reference i9-13900KF, and
+it needs roughly two cores flat out for that second - on a 4-core machine the
+game will hitch while it runs. Playable if you speak between contacts, annoying
+during one.
+
+The first phrase in a new language is slower: **2.2 - 3.5 s**, because the Argos
+model and the Piper voice load on demand. After that it is ~650 ms. The GUI
+pre-warms Russian, Ukrainian, Spanish, French, Polish and English at startup.
+
 ## 1. Quick start
 
 1. `voicerp-gui.bat`

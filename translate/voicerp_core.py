@@ -6,6 +6,34 @@ Importable with no side effects beyond reading config, so both the CLI
 import os, sys, glob, site, io, json, time, queue, threading, wave
 
 
+SHIM_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'shims')
+
+
+def prefer_minisbd():
+    """Let a slim install skip stanza, and with it torch.
+
+    argostranslate 1.11 imports stanza unguarded in sbd.py, and stanza imports
+    torch at module level - 502 MB, plus spacy/scipy/sympy in its train, for
+    sentence splitting argos can do with MiniSBD instead. Measured saving with
+    all seven removed: 839 MB, with whisper still on CUDA and multi-sentence
+    splitting still correct.
+
+    The shim is appended to the END of sys.path and only when torch is really
+    absent, so a full install keeps using the real stanza and nothing changes.
+    find_spec is used rather than an import because importing torch to find out
+    whether it exists costs several seconds.
+    """
+    os.environ.setdefault('ARGOS_CHUNK_TYPE', 'MINISBD')
+    os.environ.setdefault('ARGOS_STANZA_AVAILABLE', '0')
+    import importlib.util
+    if importlib.util.find_spec('torch') is None and os.path.isdir(SHIM_DIR):
+        if SHIM_DIR not in sys.path:
+            sys.path.append(SHIM_DIR)
+
+
+prefer_minisbd()
+
+
 def add_nvidia_dlls():
     """faster-whisper needs CUDA 12 runtime DLLs that pip puts in odd places."""
     for sp in site.getsitepackages() + [site.getusersitepackages()]:

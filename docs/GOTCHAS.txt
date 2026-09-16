@@ -242,3 +242,27 @@ NOT DONE
     which renders the window even while it is occluded, and steals nothing.
     Also note GetWindowRect can return negative coordinates on a multi-monitor
     setup - CopyFromScreen then grabs the wrong area, PrintWindow does not care.
+26. argostranslate 1.11 drags torch in for nothing. sbd.py guards `import spacy`
+    in a try/except but imports stanza unguarded, and stanza imports torch at
+    module level. Importing argostranslate.translate therefore loads torch.
+    Measured with torch, spacy, scipy, blis, thinc, sympy and stanza all
+    renamed away, ARGOS_CHUNK_TYPE=MINISBD, and a 25-line stub on sys.path:
+      839 MB smaller, whisper still on CUDA, 37 languages, and
+      'Contact north. Two vehicles moving fast.' still split into two sentences.
+    argos ships MiniSBD alongside stanza and prefers it per package, so nothing
+    is lost. Two knobs do it, both read in settings.py:
+      ARGOS_CHUNK_TYPE=MINISBD        picks the detector
+      ARGOS_STANZA_AVAILABLE=0        stops it downloading stanza sbd packages
+    The stub goes at the END of sys.path and only when torch is really absent
+    (importlib.util.find_spec, not import - importing torch to test for torch
+    costs seconds), so a full install keeps the real stanza.
+27. Measuring a Python process on Windows Store Python: venv\Scripts\python.exe
+    is a redirector stub, not the interpreter. Get-Process on the PID that
+    Start-Process returns reports an 11 MB peak working set for a run that
+    really used 2.4 GB, and filtering Win32_Process on Name='python.exe' misses
+    the real child too. Measure from inside the process (psutil.Process().
+    memory_info().rss). ctypes psapi.GetProcessMemoryInfo silently returns
+    zeroes here - it needs kernel32.K32GetProcessMemoryInfo on current Windows.
+    Reference footprint, RTX 4080: VRAM +0.84 GB after load and +1.12 GB peak;
+    RAM 20 MB at start, 922 MB with whisper, 1704 MB with 5 Argos models warm,
+    2383 MB with 5 Piper voices cached as well.
