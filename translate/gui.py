@@ -18,6 +18,7 @@ import voicerp_core as core
 BG, PANEL, FG, DIM, ACC = '#1b1d21', '#24272c', '#e6e6e6', '#8b9098', '#4da3ff'
 OK, BAD = '#5dd47f', '#ff6b6b'
 CFG = os.path.join(HERE, 'gui_state.json')
+HELP_MD = os.path.join(HERE, 'HELP.md')   # same file the repo ships as the doc
 PTT_KEYS = ['f9', 'f8', 'f7', 'f6', 'caps_lock', 'scroll_lock']
 
 
@@ -164,6 +165,7 @@ class App:
         ttk.Button(row, text='Test voice', command=self.test).pack(side='left')
         ttk.Button(row, text='Reload', command=self.reload_langs).pack(side='left',
                                                                       padx=6)
+        ttk.Button(row, text='Help', command=self.show_help).pack(side='left')
 
         # ---- right: routing, meter, log ----
         right = ttk.Frame(body)
@@ -430,6 +432,122 @@ class App:
         if not self.ready:
             return
         threading.Thread(target=self.engine.speak_test, daemon=True).start()
+
+    # ---------- help ----------
+
+    def show_help(self):
+        """Render HELP.md in a window.
+
+        The same file is the repo's settings guide, so the documentation cannot
+        drift from what the app shows. Deliberately a tiny subset of markdown -
+        headings, fences, tables, bullets, **bold** - because anything more
+        would need a dependency to display a text file.
+        """
+        w = getattr(self, '_help_win', None)
+        if w is not None and w.winfo_exists():
+            w.lift()
+            w.focus_force()
+            return
+        try:
+            md = open(HELP_MD, encoding='utf-8').read()
+        except Exception as e:
+            md = ('# Help file missing\n\nExpected it at:\n\n```\n%s\n```\n\n'
+                  '%s\n\nThe repo copy is translate/HELP.md.' % (HELP_MD, e))
+
+        w = tk.Toplevel(self.root)
+        self._help_win = w
+        w.title('VoiceRP - settings and recommendations')
+        w.geometry('900x780')
+        w.configure(bg=BG)
+        w.transient(self.root)
+
+        frame = ttk.Frame(w, style='P.TFrame', padding=8)
+        frame.pack(fill='both', expand=True)
+        frame.rowconfigure(0, weight=1)
+        frame.columnconfigure(0, weight=1)
+        t = tk.Text(frame, bg='#15171a', fg=FG, relief='flat', wrap='word',
+                    padx=16, pady=12, insertbackground=FG,
+                    font=('Segoe UI', 10), spacing1=2, spacing3=3)
+        t.grid(row=0, column=0, sticky='nsew')
+        sb = ttk.Scrollbar(frame, orient='vertical', command=t.yview)
+        sb.grid(row=0, column=1, sticky='ns')
+        t.configure(yscrollcommand=sb.set)
+
+        t.tag_configure('h1', foreground=ACC, font=('Segoe UI', 15, 'bold'),
+                        spacing1=10, spacing3=8)
+        t.tag_configure('h2', foreground=ACC, font=('Segoe UI', 11, 'bold'),
+                        spacing1=14, spacing3=6)
+        t.tag_configure('code', foreground='#9fe0b0', font=('Consolas', 9),
+                        lmargin1=24, lmargin2=24)
+        t.tag_configure('table', foreground=FG, font=('Consolas', 9),
+                        lmargin1=16, lmargin2=16)
+        t.tag_configure('bold', font=('Segoe UI', 10, 'bold'))
+        t.tag_configure('bullet', lmargin1=18, lmargin2=34)
+        t.tag_configure('rule', foreground='#3a3f46')
+        t.tag_configure('mono', foreground='#9fe0b0', font=('Consolas', 9))
+
+        def inline(line, base=''):
+            """**bold** and `code` without pulling in a markdown library."""
+            for i, chunk in enumerate(line.split('**')):
+                for j, part in enumerate(chunk.split('`')):
+                    if not part:
+                        continue
+                    tags = [base] if base else []
+                    if i % 2:
+                        tags.append('bold')
+                    if j % 2:
+                        tags.append('mono')
+                    t.insert('end', part, tuple(tags))
+            t.insert('end', '\n')
+
+        def flush(rows):
+            """Pipe tables as aligned columns; the |---| row is layout, not data."""
+            if not rows:
+                return
+            grid = [[c.strip() for c in r.strip().strip('|').split('|')]
+                    for r in rows]
+            grid = [g for g in grid
+                    if not all(set(c) <= set('-: ') and c for c in g)]
+            if not grid:
+                return
+            n = max(len(g) for g in grid)
+            grid = [g + [''] * (n - len(g)) for g in grid]
+            wid = [max(len(g[i]) for g in grid) for i in range(n)]
+            for k, g in enumerate(grid):
+                txt = '  '.join(c.replace('`', '').ljust(wid[i])
+                                for i, c in enumerate(g)).rstrip()
+                t.insert('end', '  ' + txt + '\n',
+                         ('table', 'bold') if k == 0 else 'table')
+            t.insert('end', '\n')
+            rows.clear()
+
+        fence, rows = False, []
+        for line in md.splitlines():
+            if line.startswith('```'):
+                flush(rows)
+                fence = not fence
+                t.insert('end', '\n')
+                continue
+            if fence:
+                t.insert('end', line + '\n', 'code')
+                continue
+            if line.lstrip().startswith('|'):
+                rows.append(line)
+                continue
+            flush(rows)
+            if line.startswith('# '):
+                t.insert('end', line[2:] + '\n', 'h1')
+            elif line.startswith('## '):
+                t.insert('end', line[3:] + '\n', 'h2')
+            elif line.startswith('---'):
+                t.insert('end', '\u2500' * 78 + '\n', 'rule')
+            else:
+                inline(line, 'bullet' if line.lstrip()[:2] in ('- ', '* ') else '')
+        flush(rows)
+
+        t.configure(state='disabled')
+        t.bind('<Escape>', lambda e: w.destroy())
+        t.focus_set()
 
     # ---------- UI pump ----------
 

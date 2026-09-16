@@ -34,6 +34,10 @@ voice-changer\voicerp-gui-debug.bat    # keeps a console for tracebacks
 - **Test voice** synthesises a line straight to the output, so routing can be
   proven without talking.
 - Selections persist in `translate/gui_state.json`.
+- **Help** opens [`translate/HELP.md`](translate/HELP.md) in the app. That file
+  is every setting and recommendation - VoiceRP, Windows, Discord, VB-Cable,
+  Sonar, mic level, how to speak to it, and a symptom-to-cause table. The app
+  reads the same file the repo ships, so the two cannot drift.
 
 Models load on a worker thread; the mic stream is opened from the Tk main
 thread, which WASAPI requires (see GOTCHAS #15).
@@ -135,6 +139,20 @@ can follow the same file.
 | F11 | list every language + current state |
 | F12 | quit |
 
+## Settings
+
+**[translate/HELP.md](translate/HELP.md)** - every setting that matters, in the
+order to set it, with the recommended value and the reason. Also reachable from
+the **Help** button in the GUI.
+
+The three that break everything if wrong:
+
+1. Microphone **Audio enhancements = Off** in Windows Sound. "Voice Clarity" can
+   gate a studio mic to digital zero.
+2. Mic gain landing at **-30 to -6 dB** input peak. A clipped mic makes whisper
+   invent whole sentences.
+3. Discord **Noise Suppression = None**, AGC off. Krisp chops synthesised speech.
+
 ## Read this before debugging audio
 
 **[docs/GOTCHAS.txt](docs/GOTCHAS.txt)** is the most valuable file here - 23
@@ -158,10 +176,11 @@ numbered findings, each with the measurement that proved it. The expensive ones:
 
 ```
 translate/      voicerp_core.py (engine), gui.py, bridge.py (CLI),
+                HELP.md (settings guide, rendered in-app),
                 langs.json, the three setup scripts
 voice-changer/  VCClient launcher and live voice switching (PowerShell)
 tools/          audio diagnostics - meter, tone, cable glitch test, clip counter
-docs/           GOTCHAS.txt, gui.png
+docs/           GOTCHAS.txt, gui.png, help.png
 ```
 
 ## Licence and credits
