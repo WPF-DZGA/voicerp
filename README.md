@@ -14,7 +14,36 @@ Two independent tools sharing one virtual audio cable:
 Everything runs on your own machine. No API keys, no per-hour cost, no audio
 leaves the PC.
 
-## What it looks like
+The translate bridge has a GUI (`translate/gui.py`) and a keyboard-only CLI
+(`translate/bridge.py`). Both drive the same engine, `translate/voicerp_core.py`.
+
+## The GUI
+
+![VoiceRP GUI](docs/gui.png)
+
+```powershell
+voice-changer\voicerp-gui.bat          # no console
+voice-changer\voicerp-gui-debug.bat    # keeps a console for tracebacks
+```
+
+- **Output language** - all 37, filter box, `m`/`f` per voice. Languages with
+  more than one Piper voice get a picker underneath; the choice is remembered.
+- **Routing** - microphone, the cable to send to, source language, talk key,
+  and an optional second sink so you hear what was sent. Devices are resolved
+  by **name**, because PortAudio indices move when USB audio is replugged.
+- **Test voice** synthesises a line straight to the output, so routing can be
+  proven without talking.
+- Selections persist in `translate/gui_state.json`.
+
+Models load on a worker thread; the mic stream is opened from the Tk main
+thread, which WASAPI requires (see GOTCHAS #15).
+
+The arrangement follows Beatrice's layout. **No Beatrice code is used**: its
+`LICENSE.txt` is MIT but `LICENSES_BUNDLED.txt` states the program contains a
+non-public inference library that needs individual permission from Project
+Beatrice. Only the idea of the layout is borrowed.
+
+## What the CLI looks like
 
 ```
 * rec
@@ -92,10 +121,10 @@ can follow the same file.
 # 3. python translate\getvoices.py       # ~2.5 GB of Piper voices
 # 4. python translate\getargos.py        # 37 Argos translation packs
 # 5. python translate\validate_langs.py  # confirm every language speaks
-# 6. python translate\bridge.py
+# 6. python translate\gui.py        # or bridge.py for the keyboard-only CLI
 ```
 
-## Keys
+## Keys (CLI, and F9 in the GUI)
 
 | Key | |
 |---|---|
@@ -128,10 +157,11 @@ numbered findings, each with the measurement that proved it. The expensive ones:
 ## Layout
 
 ```
-translate/      bridge.py, langs.json, the three setup scripts
+translate/      voicerp_core.py (engine), gui.py, bridge.py (CLI),
+                langs.json, the three setup scripts
 voice-changer/  VCClient launcher and live voice switching (PowerShell)
 tools/          audio diagnostics - meter, tone, cable glitch test, clip counter
-docs/           GOTCHAS.txt
+docs/           GOTCHAS.txt, gui.png
 ```
 
 ## Licence and credits

@@ -226,4 +226,19 @@ NOT DONE
     CRLF expansion happens in piper.exe's own CRT before we see the bytes, and
     an inserted 0x0D is indistinguishable from real PCM data. The fix would have
     to be _setmode(_O_BINARY) inside piper.
-
+24. ttk's clam theme draws a readonly Combobox grey-on-grey and ignores a plain
+    s.configure('TCombobox', ...). The readonly state has to be mapped:
+      s.map('TCombobox', fieldbackground=[('readonly','#15171a')],
+            foreground=[('readonly',FG)],
+            selectbackground=[('readonly','#15171a')],
+            selectforeground=[('readonly',FG)])
+    The dropdown list is a Tk (not ttk) widget, so it needs option_add:
+      root.option_add('*TCombobox*Listbox.background', '#15171a')
+    Symptom if you miss it: every device name is unreadable but the app works.
+25. Screenshotting a window on a gaming PC: do NOT SetForegroundWindow. If a
+    full-screen game is running it takes focus straight back and
+    Graphics.CopyFromScreen captures the game instead. Use
+      PrintWindow(hwnd, hdc, 2)        # 2 = PW_RENDERFULLCONTENT
+    which renders the window even while it is occluded, and steals nothing.
+    Also note GetWindowRect can return negative coordinates on a multi-monitor
+    setup - CopyFromScreen then grabs the wrong area, PrintWindow does not care.

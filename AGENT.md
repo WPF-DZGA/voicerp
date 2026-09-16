@@ -93,8 +93,22 @@ picker; it follows the Windows default.
 ## 6. Run it
 
 ```powershell
-D:\VoiceRP\xlate\venv\Scripts\python translate\bridge.py
+D:\VoiceRP\xlate\venv\Scripts\python translate\gui.py      # window
+D:\VoiceRP\xlate\venv\Scripts\python translate\bridge.py   # keyboard only
 ```
+
+Both front ends import `translate/voicerp_core.py`, which owns the models, the
+input stream and the pipeline. Add a feature there, not in one front end.
+
+Three rules that the core enforces and any new front end must respect:
+
+- `Engine.open_input()` must be called from the **main thread** (Tk callbacks
+  count). A WASAPI stream started on a worker dies with `PaErrorCode -9999`.
+- `load_models()` must NOT be on the main thread, or the window is frozen for
+  ~40 s. It touches no audio device, so a worker is safe.
+- Every callback (`on_log`, `on_level`, `on_result`, `on_state`) fires on a
+  worker thread. Tk is not thread-safe: push to a `queue.Queue` and drain it
+  from `root.after()`. `gui.py` does exactly this in `_pump()`.
 
 Hold **F9**, speak, release. Watch the `input peak` line:
 
@@ -239,6 +253,10 @@ Two traps that cost real time if you are an agent driving PowerShell:
 
 - `.Replace()` on a multi-line block **silently misses** on a CRLF file.
 - Here-strings mangle Python quotes, and base64 over ~8 KB gets truncated.
+- A here-string over roughly 8 KB fails outright with
+  `[WinError 206] The filename or extension is too long` - that is the command
+  length limit, not a path problem. Split the write, or hand the file over as a
+  file rather than as command text.
 
 Write patches as small base64 chunks applied by a Python splice script, or use
 `[System.IO.File]::ReadAllLines()` and replace by line index. Always finish with
