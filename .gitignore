@@ -23,3 +23,9 @@ tmp/
 
 # machine-specific
 langs_broken.json
+
+installer/dist/
+iscc.out
+install.log
+build.log
+bootstrap-*.log

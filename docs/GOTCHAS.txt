@@ -266,3 +266,38 @@ NOT DONE
     Reference footprint, RTX 4080: VRAM +0.84 GB after load and +1.12 GB peak;
     RAM 20 MB at start, 922 MB with whisper, 1704 MB with 5 Argos models warm,
     2383 MB with 5 Piper voices cached as well.
+28. Inno Setup: never put "/" in an [Icons] Name. Windows reads it as a path
+    separator, so
+      Name: "{group}\VoiceRP setup / repair"
+    makes Setup try to create a FOLDER called "VoiceRP setup " and fail with
+      IPersistFile::Save failed; code 0x80070003
+      The system cannot find the path specified.
+    halfway through "Creating shortcuts". Worse, a silent test run with /NOICONS
+    skips shortcut creation entirely and passes - so test the installer WITHOUT
+    /NOICONS, or the first real user finds this instead of you.
+29. The Python embeddable zip cannot run a tkinter app. It ships without
+    tkinter and without pip, so a GUI packaged around it dies on import. Use
+    the official installer silently into a private folder instead:
+      /quiet InstallAllUsers=0 TargetDir=<app>\python Include_pip=1
+      Include_tcltk=1 Include_launcher=0 PrependPath=0 AssociateFiles=0
+      Shortcuts=0
+    and then assert `import tkinter` immediately, so the failure is named at
+    install time rather than at first launch. PrependPath=0 matters: it leaves
+    whatever Python the user already has completely alone.
+30. A slim install needs the stanza stub registered for the whole environment,
+    not just for the app. getargos.py and validate_langs.py import
+    argostranslate directly and never touch voicerp_core, so
+    prefer_minisbd() never runs for them and they die on sbd.py's
+    `import stanza` - which the installer only discovers because its stderr
+    was being captured. The fix that covers every process in the venv is
+    sitecustomize.py in site-packages, which CPython imports automatically:
+    it sets ARGOS_CHUNK_TYPE=MINISBD and appends translate/shims to sys.path.
+    Verify it, do not assume it:
+      python -c "import os, stanza; assert os.environ['ARGOS_CHUNK_TYPE']=='MINISBD'"
+31. Write requirements from a working venv's `pip freeze`, never from memory.
+    Two of the packages in the first hand-written requirements-slim.txt do not
+    exist for Windows at all - piper-phonemize-cross and espeakng-loader - and
+    pip fails the whole file on the first missing name. piper-tts 1.8.0 needs
+    only onnxruntime and pathvalidate; it carries its own espeak-ng data.
+    Several invented version pins were wrong too (av 15 vs the working 18,
+    onnxruntime 1.23 vs 1.30).

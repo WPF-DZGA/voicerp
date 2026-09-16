@@ -1,48 +1,51 @@
-# Slim install: same behaviour, 839 MB smaller than requirements.txt.
+# Slim install: 839 MB smaller than requirements.txt, same behaviour.
 #
-# What is missing compared to the full file: torch, spacy, scipy, blis, thinc,
-# sympy and stanza. argostranslate only wants them for sentence splitting via
-# stanza, and it ships MiniSBD as well - so voicerp_core sets
-# ARGOS_CHUNK_TYPE=MINISBD and adds translate/shims to the end of sys.path,
-# where a stub satisfies argos's unguarded `import stanza`.
+# Versions here are the ones the reference rig actually runs, taken from its
+# freeze - not hand-written. Only the three that matter are pinned; the rest
+# float so a future wheel does not break the install.
 #
-# Verified on the reference rig: whisper still on CUDA, 37 languages, and
-# multi-sentence input still splits correctly.
+# IMPORTANT: argostranslate is NOT in this file. Its dependency list includes
+# spacy and stanza, and stanza imports torch at module level - 502 MB for
+# sentence splitting that MiniSBD does instead. So the bootstrap installs it
+# with --no-deps and this file carries its real requirements explicitly:
 #
-#   pip install -r requirements-slim.txt --no-deps
-#   pip install -r requirements-slim.txt        # then resolve the rest
+#   pip install -r requirements-slim.txt
+#   pip install --no-deps argostranslate==1.11.0
 #
-# --no-deps matters: a plain install re-drags torch in through argostranslate.
+# installer\bootstrap.ps1 does both. See docs/GOTCHAS.txt #26.
 
 # --- speech to text ---
 faster-whisper==1.2.1
-ctranslate2==4.6.0
-av==15.1.0
+# ctranslate2 also powers argostranslate
+ctranslate2
+av
 tokenizers
-huggingface-hub
+huggingface_hub
+tqdm
+requests
 
-# --- translation (no stanza / torch) ---
-argostranslate==1.11.0
+# --- translation: argostranslate's real needs, minus spacy and stanza ---
 minisbd
 sentencepiece
 sacremoses
 packaging
+joblib
+regex
 
-# --- text to speech ---
+# --- text to speech: piper-tts needs only these two ---
 piper-tts==1.8.0
-onnxruntime==1.23.0
-espeakng-loader
-piper-phonemize-cross
+onnxruntime
+pathvalidate
 
 # --- audio and input ---
-sounddevice==0.5.2
+sounddevice
 numpy
-pynput==1.8.2
+pynput
 
-# --- diagnostics (optional, tools/ and footprint.py) ---
+# --- diagnostics: tools/ and tools/footprint.py ---
 psutil
 
-# --- CUDA runtime, ~2 GB. Drop both lines for a CPU-only install:
-# --- whisper then falls back automatically, ~1.2 s instead of ~0.2 s.
+# --- CUDA runtime, ~2 GB. The bootstrap omits these for a CPU-only install;
+# --- whisper then falls back on its own, ~1.2 s per phrase instead of ~0.2 s.
 nvidia-cublas-cu12
 nvidia-cudnn-cu12

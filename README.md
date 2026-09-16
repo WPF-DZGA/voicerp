@@ -167,7 +167,35 @@ pip install -r requirements-slim.txt
 A weaker GPU is fine; whisper falls back to CPU int8 automatically (~1.2 s
 instead of ~200 ms). No GPU works but roughly doubles the translate delay.
 
-## Install
+## Installer
+
+```powershell
+installer\dist\VoiceRP-Setup-1.0.0.exe
+```
+
+A 2.2 MB installer that ships the app and nothing else. Python, the wheels and
+the models are fetched on first run from python.org, PyPI and Hugging Face, so
+no third-party bytes are redistributed and the download matches the languages
+picked in the wizard. Build it with
+`winget install JRSoftware.InnoSetup` then `ISCC.exe installer\voicerp.iss`;
+[installer/README.md](installer/README.md) has the details.
+
+The wizard states the download size before anything happens, detects VB-Cable
+and links to vb-audio.com if it is missing (it is donationware and cannot be
+bundled), lets the user pick languages and CPU or CUDA, then runs
+`installer/bootstrap.ps1` in a visible console - this downloads gigabytes, and
+pip's own output is the only honest progress indicator.
+
+It is **unsigned**, being an internal tool, so SmartScreen shows "Windows
+protected your PC": *More info* then *Run anyway*.
+
+Verified from a clean install: 2 languages, CPU-only, **981 MB** on disk
+including the 464 MB whisper model, no torch, GUI up and armed on F9.
+
+Re-run `voicerp-setup.bat` any time to add languages or retry failed
+downloads; `-DryRun` prints the plan and downloads nothing.
+
+## Install from source
 
 See **[AGENT.md](AGENT.md)** - written so an AI coding agent with shell access
 can do the whole setup, including the parts that are easy to get wrong. A human
