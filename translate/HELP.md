@@ -30,9 +30,14 @@ instead of 0.2 s.
 | Headset | your headphones | only used if the box below is ticked |
 | also play in my headset | on while testing, off in a firefight | it is a separate stream, others do not hear it twice |
 | Voice | whichever you prefer | per-language, remembered |
+| Language | English or Polish | the interface only; it does not affect translation |
 
 Choices are saved to `translate/gui_state.json` when you change them, and
 restored next launch. Delete that file to start clean.
+
+The Polish interface reads `translate/HELP.pl.md` for this page; strings live in
+`translate/i18n.py`. Engine log lines stay English on purpose - they get pasted
+into bug reports and searched for verbatim.
 
 **Voice gender**: nine languages have no female Piper voice (German,
 Portuguese, Romanian, Bulgarian, Latvian, Slovenian, Albanian, Arabic, Farsi).

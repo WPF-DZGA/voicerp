@@ -34,6 +34,17 @@ voice-changer\voicerp-gui-debug.bat    # keeps a console for tracebacks
 - **Test voice** synthesises a line straight to the output, so routing can be
   proven without talking.
 - Selections persist in `translate/gui_state.json`.
+- **English or Polish interface**, switched live from the Language dropdown -
+  labels, log lines, the language names in the picker (sorted with Polish
+  collation, so `węgierski` lands before `wietnamski`) and the Help page,
+  which has its own Polish translation in
+  [`translate/HELP.pl.md`](translate/HELP.pl.md). Strings live in
+  `translate/i18n.py`; `translate/test_i18n.py` switches the real window with
+  the models stubbed out and fails if any widget was left untranslated. Engine
+  log lines stay English deliberately - they get pasted into bug reports.
+
+  ![Polski interfejs](docs/gui_pl.png)
+
 - **Help** opens [`translate/HELP.md`](translate/HELP.md) in the app. That file
   is every setting and recommendation - VoiceRP, Windows, Discord, VB-Cable,
   Sonar, mic level, how to speak to it, and a symptom-to-cause table. The app
@@ -176,11 +187,12 @@ numbered findings, each with the measurement that proved it. The expensive ones:
 
 ```
 translate/      voicerp_core.py (engine), gui.py, bridge.py (CLI),
-                HELP.md (settings guide, rendered in-app),
+                HELP.md + HELP.pl.md (settings guide, rendered in-app),
+                i18n.py, test_i18n.py,
                 langs.json, the three setup scripts
 voice-changer/  VCClient launcher and live voice switching (PowerShell)
 tools/          audio diagnostics - meter, tone, cable glitch test, clip counter
-docs/           GOTCHAS.txt, gui.png, help.png
+docs/           GOTCHAS.txt, gui.png, gui_pl.png, help.png
 ```
 
 ## Licence and credits

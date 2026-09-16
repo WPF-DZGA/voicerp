@@ -14,11 +14,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import voicerp_core as core
+import i18n
 
 BG, PANEL, FG, DIM, ACC = '#1b1d21', '#24272c', '#e6e6e6', '#8b9098', '#4da3ff'
 OK, BAD = '#5dd47f', '#ff6b6b'
 CFG = os.path.join(HERE, 'gui_state.json')
-HELP_MD = os.path.join(HERE, 'HELP.md')   # same file the repo ships as the doc
+HELP_MD = {'en': os.path.join(HERE, 'HELP.md'),      # the files the repo ships
+           'pl': os.path.join(HERE, 'HELP.pl.md')}
 PTT_KEYS = ['f9', 'f8', 'f7', 'f6', 'caps_lock', 'scroll_lock']
 
 
@@ -30,10 +32,22 @@ class App:
                                   on_result=self._result_cb, on_state=self._state_cb)
         self.ready = False
         self.listener = None
+        self._last_db = None
         self.state = self._load_state()
+        self.uilang = self.state.get('uilang', 'en')
+        self._tx = []          # (widget, string key) pairs, re-texted on switch
         self._build()
         self.root.after(60, self._pump)
         threading.Thread(target=self._boot, daemon=True).start()
+
+    def T(self, key, *a):
+        return i18n.tr(self.uilang, key, *a)
+
+    def _reg(self, widget, key):
+        """Remember a widget so switching language can re-text it."""
+        widget.configure(text=self.T(key))
+        self._tx.append((widget, key))
+        return widget
 
     # ---------- persistence ----------
 
@@ -49,7 +63,8 @@ class App:
         self.state.update({
             'mic': self.mic.get(), 'out': self.out.get(),
             'monitor': self.mon.get(), 'mon_dev': self.moni.get(),
-            'src': self.src.get(),
+            'uilang': self.uilang,
+            'src_i': self.engine.src_i,
             'target': self.engine.target, 'ptt': self.ptt.get(),
             'voices': self.engine.voice_override,
         })
@@ -76,7 +91,7 @@ class App:
 
     def _build(self):
         r = self.root
-        r.title('VoiceRP')
+        r.title(self.T('title'))
         r.geometry('1020x700')
         r.configure(bg=BG)
         r.protocol('WM_DELETE_WINDOW', self.quit)
@@ -127,7 +142,7 @@ class App:
         left.rowconfigure(3, weight=1)
         left.columnconfigure(0, weight=1)
 
-        ttk.Label(left, text='OUTPUT LANGUAGE', style='H.TLabel').grid(
+        self._reg(ttk.Label(left, style='H.TLabel'), 'out_lang').grid(
             row=0, column=0, sticky='w')
         self.filter = tk.StringVar()
         fe = tk.Entry(left, textvariable=self.filter, bg='#15171a', fg=FG,
@@ -135,7 +150,7 @@ class App:
         fe.grid(row=1, column=0, sticky='ew', pady=(6, 2))
         fe.insert(0, '')
         self.filter.trace_add('write', lambda *_: self._refill())
-        ttk.Label(left, text='type to filter', style='Dim.TLabel').grid(
+        self._reg(ttk.Label(left, style='Dim.TLabel'), 'filter_hint').grid(
             row=2, column=0, sticky='w')
 
         wrap = ttk.Frame(left, style='P.TFrame')
@@ -152,8 +167,8 @@ class App:
         self.lst.configure(yscrollcommand=sb.set)
         self.lst.bind('<<ListboxSelect>>', self._pick_lang)
 
-        ttk.Label(left, text='VOICE', style='H.TLabel').grid(row=4, column=0,
-                                                             sticky='w', pady=(6, 0))
+        self._reg(ttk.Label(left, style='H.TLabel'), 'voice').grid(
+            row=4, column=0, sticky='w', pady=(6, 0))
         self.voice = tk.StringVar()
         self.voice_box = ttk.Combobox(left, textvariable=self.voice,
                                       state='readonly', values=[])
@@ -162,10 +177,10 @@ class App:
 
         row = ttk.Frame(left, style='P.TFrame')
         row.grid(row=6, column=0, sticky='ew', pady=(4, 0))
-        ttk.Button(row, text='Test voice', command=self.test).pack(side='left')
-        ttk.Button(row, text='Reload', command=self.reload_langs).pack(side='left',
-                                                                      padx=6)
-        ttk.Button(row, text='Help', command=self.show_help).pack(side='left')
+        self._reg(ttk.Button(row, command=self.test), 'test').pack(side='left')
+        self._reg(ttk.Button(row, command=self.reload_langs),
+                  'reload').pack(side='left', padx=6)
+        self._reg(ttk.Button(row, command=self.show_help), 'help').pack(side='left')
 
         # ---- right: routing, meter, log ----
         right = ttk.Frame(body)
@@ -176,46 +191,52 @@ class App:
         rt = ttk.Frame(right, style='P.TFrame', padding=10)
         rt.grid(row=0, column=0, sticky='ew')
         rt.columnconfigure(1, weight=1)
-        ttk.Label(rt, text='ROUTING', style='H.TLabel').grid(
+        self._reg(ttk.Label(rt, style='H.TLabel'), 'routing').grid(
             row=0, column=0, columnspan=2, sticky='w', pady=(0, 6))
 
         self.mic = tk.StringVar()
         self.out = tk.StringVar()
-        self.src = tk.StringVar(value=self.state.get('src', 'English'))
+        self.src = tk.StringVar()
+        self.uil = tk.StringVar(value=dict(i18n.UI_LANGS).get(self.uilang, 'English'))
         self.ptt = tk.StringVar(value=self.state.get('ptt', 'f9'))
         self.mon = tk.BooleanVar(value=bool(self.state.get('monitor', False)))
         self.moni = tk.StringVar()
 
-        self.mic_box = self._combo(rt, 1, 'Microphone', self.mic)
-        self.out_box = self._combo(rt, 2, 'Send to', self.out)
-        self._combo(rt, 3, 'I speak', self.src,
-                    [n for _, n in core.SRC_OPTS], self._pick_src)
-        self._combo(rt, 4, 'Talk key', self.ptt, PTT_KEYS, self._rebind_ptt)
-        self.mon_box = self._combo(rt, 5, 'Headset', self.moni,
-                                   cb=self._pick_mon)
-        ttk.Checkbutton(rt, text='also play in my headset', variable=self.mon,
-                        command=self._pick_mon).grid(row=6, column=1, sticky='w',
-                                                     pady=(4, 0))
+        self.mic_box = self._combo(rt, 1, 'mic', self.mic)
+        self.out_box = self._combo(rt, 2, 'send_to', self.out)
+        self.src_box = self._combo(rt, 3, 'i_speak', self.src,
+                                   self._src_names(), self._pick_src)
+        self.src.set(self._src_names()[0])   # filled properly once models load
+        self._combo(rt, 4, 'talk_key', self.ptt, PTT_KEYS, self._rebind_ptt)
+        self.mon_box = self._combo(rt, 5, 'headset', self.moni, cb=self._pick_mon)
+        self.mon_chk = self._reg(
+            ttk.Checkbutton(rt, variable=self.mon, command=self._pick_mon),
+            'monitor')
+        self.mon_chk.grid(row=6, column=1, sticky='w', pady=(4, 0))
+        self.uil_box = self._combo(rt, 7, 'ui_lang', self.uil,
+                                   [n for _, n in i18n.UI_LANGS],
+                                   self._pick_uilang)
         self.mic_box.bind('<<ComboboxSelected>>', self._pick_mic)
         self.out_box.bind('<<ComboboxSelected>>', self._pick_out)
 
         mt = ttk.Frame(right, style='P.TFrame', padding=10)
         mt.grid(row=1, column=0, sticky='ew', pady=8)
         mt.columnconfigure(0, weight=1)
-        self.ptt_lbl = ttk.Label(mt, text='idle', style='P.TLabel',
+        self.ptt_lbl = ttk.Label(mt, text=self.T('idle'), style='P.TLabel',
                                  font=('Segoe UI', 14, 'bold'))
         self.ptt_lbl.grid(row=0, column=0, sticky='w')
         self.lvl = ttk.Progressbar(mt, style='Lvl.Horizontal.TProgressbar',
                                    maximum=60, value=0)
         self.lvl.grid(row=1, column=0, sticky='ew', pady=(6, 2))
-        self.lvl_lbl = ttk.Label(mt, text='input peak -', style='Dim.TLabel')
+        self.lvl_lbl = ttk.Label(mt, text=self.T('peak_none'), style='Dim.TLabel')
         self.lvl_lbl.grid(row=2, column=0, sticky='w')
 
         lg = ttk.Frame(right, style='P.TFrame', padding=10)
         lg.grid(row=2, column=0, sticky='nsew')
         lg.rowconfigure(1, weight=1)
         lg.columnconfigure(0, weight=1)
-        ttk.Label(lg, text='LOG', style='H.TLabel').grid(row=0, column=0, sticky='w')
+        self._reg(ttk.Label(lg, style='H.TLabel'), 'log').grid(
+            row=0, column=0, sticky='w')
         self.log = tk.Text(lg, bg='#15171a', fg=FG, relief='flat', wrap='word',
                           height=12, font=('Consolas', 9), insertbackground=FG)
         self.log.grid(row=1, column=0, sticky='nsew', pady=(6, 0))
@@ -227,12 +248,12 @@ class App:
         self.log.tag_configure('err', foreground=BAD)
         self.log.tag_configure('sys', foreground=ACC)
 
-        self.status = tk.StringVar(value='starting...')
+        self.status = tk.StringVar(value=self.T('starting'))
         ttk.Label(r, textvariable=self.status, anchor='w',
                   padding=(12, 4)).pack(fill='x', side='bottom')
 
-    def _combo(self, parent, row, label, var, values=None, cb=None):
-        ttk.Label(parent, text=label, style='Dim.TLabel').grid(
+    def _combo(self, parent, row, key, var, values=None, cb=None):
+        self._reg(ttk.Label(parent, style='Dim.TLabel'), key).grid(
             row=row, column=0, sticky='w', padx=(0, 8), pady=3)
         c = ttk.Combobox(parent, textvariable=var, state='readonly',
                          values=values or [])
@@ -262,6 +283,11 @@ class App:
         self.engine.voice_override = {
             k: v for k, v in (self.state.get('voices') or {}).items()
             if k in self.engine.langs}
+        try:
+            self.engine.src_i = int(self.state.get('src_i', 0)) % len(core.SRC_OPTS)
+        except Exception:
+            self.engine.src_i = 0
+        self.src.set(self._src_names()[self.engine.src_i])
         self._refill()
         ins, outs = core.list_devices('in'), core.list_devices('out')
         self.mic_box['values'] = ins
@@ -274,9 +300,9 @@ class App:
         self.moni.set(self._prefer(self.state.get('mon_dev'), outs,
                                    ['Arctis', 'Headset', 'Headphones', 'Speakers']))
         for code, lab, why in self.engine.skipped:
-            self._write('skipped %s (%s): %s\n' % (code, lab, why), 'said')
-        self._write('%d languages ready. Hold %s to talk.\n'
-                    % (len(self.engine.langs), self.ptt.get().upper()), 'sys')
+            self._write(self.T('skipped', code, lab, why) + '\n', 'said')
+        self._write(self.T('ready', len(self.engine.langs),
+                           self.ptt.get().upper()) + '\n', 'sys')
         self.engine.start()
         self._apply_out()
         self._apply_mon()
@@ -292,6 +318,41 @@ class App:
                     return o
         return options[0] if options else ''
 
+    def _src_names(self):
+        return [self.T('src_' + (c or 'auto')) for c, _ in core.SRC_OPTS]
+
+    def _pick_uilang(self, *_):
+        want = dict((n, c) for c, n in i18n.UI_LANGS).get(self.uil.get(), 'en')
+        if want == self.uilang:
+            return
+        self.uilang = want
+        self._retext()
+        self._save_state()
+
+    def _retext(self):
+        """Re-label everything in place. Cheaper and far less jarring than
+        rebuilding the window, and it keeps the log and the engine untouched."""
+        self.root.title(self.T('title'))
+        for w, key in self._tx:
+            try:
+                w.configure(text=self.T(key))
+            except Exception:
+                pass
+        self.ptt_lbl.configure(
+            text=self.T('talking') if self.engine.recording.is_set()
+            else self.T('idle'))
+        if self._last_db is None:
+            self.lvl_lbl.configure(text=self.T('peak_none'))
+        else:
+            self._show_level(self._last_db)
+        self.src_box['values'] = self._src_names()
+        self.src.set(self._src_names()[self.engine.src_i])
+        self._refill()
+        w = getattr(self, '_help_win', None)
+        if w is not None and w.winfo_exists():
+            w.destroy()
+            self.show_help()
+
     # ---------- device wiring ----------
 
     def _apply_mic(self):
@@ -303,7 +364,7 @@ class App:
         try:
             self.engine.open_input(name)
         except Exception as e:
-            self._write('mic failed: %s\n' % e, 'err')
+            self._write(self.T('mic_failed', e) + '\n', 'err')
 
     def _apply_out(self):
         name = self.out.get()
@@ -311,9 +372,9 @@ class App:
             return
         try:
             self.engine.set_output(name)
-            self._write('output -> %s\n' % name, 'sys')
+            self._write(self.T('out_ok', name) + '\n', 'sys')
         except Exception as e:
-            self._write('output failed: %s\n' % e, 'err')
+            self._write(self.T('out_failed', e) + '\n', 'err')
 
     def _pick_mic(self, *_):
         self._apply_mic()
@@ -327,17 +388,16 @@ class App:
         try:
             self.engine.set_monitor(self.moni.get() if self.mon.get() else None)
         except Exception as e:
-            self._write('headset failed: %s\n' % e, 'err')
+            self._write(self.T('mon_failed', e) + '\n', 'err')
 
     def _pick_mon(self, *_):
         self._apply_mon()
-        self._write('headset monitor %s\n'
-                    % ('on -> %s' % self.moni.get() if self.mon.get() else 'off'),
-                    'sys')
+        self._write((self.T('mon_on', self.moni.get()) if self.mon.get()
+                     else self.T('mon_off')) + '\n', 'sys')
         self._save_state()
 
     def _pick_src(self, *_):
-        names = [n for _, n in core.SRC_OPTS]
+        names = self._src_names()
         if self.src.get() in names:
             self.engine.src_i = names.index(self.src.get())
         self._save_state()
@@ -350,14 +410,15 @@ class App:
         q = self.filter.get().strip().lower()
         self.codes = []
         self.lst.delete(0, 'end')
-        for code in sorted(self.engine.langs,
-                           key=lambda c: self.engine.langs[c]['label']):
-            v = self.engine.langs[code]
-            if q and q not in v['label'].lower() and q not in code:
+        rows = [(i18n.label_for(self.uilang, c, self.engine.langs[c]['label']), c)
+                for c in self.engine.langs]
+        for label, code in sorted(rows, key=lambda r: i18n.sort_key(r[0])):
+            if q and q not in label.lower() and q not in code:
                 continue
             self.codes.append(code)
-            self.lst.insert('end', '%-3s %-22s %s' % (code, v['label'],
-                                                      v.get('gender', '?')))
+            self.lst.insert('end', '%-3s %-22s %s'
+                            % (code, label,
+                               self.engine.langs[code].get('gender', '?')))
         if self.engine.target in self.codes:
             i = self.codes.index(self.engine.target)
             self.lst.selection_set(i)
@@ -370,8 +431,9 @@ class App:
             return
         self.engine.target = self.codes[sel[0]]
         self._refresh_voices()
-        self.status.set('output language: %s'
-                        % self.engine.langs[self.engine.target]['label'])
+        self.status.set(self.T('cur_lang', i18n.label_for(
+            self.uilang, self.engine.target,
+            self.engine.langs[self.engine.target]['label'])))
         self._save_state()
 
     def _refresh_voices(self):
@@ -390,9 +452,9 @@ class App:
         try:
             self.engine.langs, self.engine.skipped = core.load_langs()
             self._refill()
-            self._write('reloaded: %d languages\n' % len(self.engine.langs), 'sys')
+            self._write(self.T('reloaded', len(self.engine.langs)) + '\n', 'sys')
         except Exception as e:
-            self._write('reload failed: %s\n' % e, 'err')
+            self._write(self.T('reload_fail', e) + '\n', 'err')
 
     # ---------- push to talk ----------
 
@@ -406,7 +468,7 @@ class App:
         try:
             from pynput import keyboard
         except Exception as e:
-            self._write('no global hotkey (%s); use the Talk button\n' % e, 'err')
+            self._write(self.T('no_hotkey', e) + '\n', 'err')
             return
         want = getattr(keyboard.Key, self.ptt.get(), None)
         if want is None:
@@ -425,7 +487,7 @@ class App:
         self.listener = keyboard.Listener(on_press=down, on_release=up)
         self.listener.daemon = True
         self.listener.start()
-        self._write('talk key: %s\n' % self.ptt.get().upper(), 'sys')
+        self._write(self.T('key_set', self.ptt.get().upper()) + '\n', 'sys')
         self._save_state()
 
     def test(self):
@@ -448,15 +510,17 @@ class App:
             w.lift()
             w.focus_force()
             return
+        path = HELP_MD.get(self.uilang) or HELP_MD['en']
+        if not os.path.exists(path):
+            path = HELP_MD['en']        # a missing translation falls back
         try:
-            md = open(HELP_MD, encoding='utf-8').read()
+            md = open(path, encoding='utf-8').read()
         except Exception as e:
-            md = ('# Help file missing\n\nExpected it at:\n\n```\n%s\n```\n\n'
-                  '%s\n\nThe repo copy is translate/HELP.md.' % (HELP_MD, e))
+            md = self.T('help_missing', path, e)
 
         w = tk.Toplevel(self.root)
         self._help_win = w
-        w.title('VoiceRP - settings and recommendations')
+        w.title(self.T('help_title'))
         w.geometry('900x780')
         w.configure(bg=BG)
         w.transient(self.root)
@@ -571,8 +635,9 @@ class App:
                 elif kind == 'booted':
                     self._after_boot()
                 elif kind == 'ptt':
-                    self.ptt_lbl.configure(text='TALKING' if val else 'idle',
-                                           foreground=OK if val else FG)
+                    self.ptt_lbl.configure(
+                        text=self.T('talking') if val else self.T('idle'),
+                        foreground=OK if val else FG)
                 elif kind == 'level':
                     self._show_level(val)
                 elif kind == 'result':
@@ -586,13 +651,14 @@ class App:
     def _show_level(self, db):
         # -60..0 dBFS mapped onto the bar; over 0 dB means whisper will
         # hallucinate, so it is called out rather than just shown full.
+        self._last_db = db
         self.lvl['value'] = max(0, min(60, 60 + db))
         warn = ''
         if db > 0:
-            warn = '  CLIPPING - turn the mic gain down'
+            warn = self.T('clipping')
         elif db < -45:
-            warn = '  very quiet'
-        self.lvl_lbl.configure(text='input peak %+.1f dB%s' % (db, warn),
+            warn = self.T('quiet')
+        self.lvl_lbl.configure(text=self.T('peak', db, warn),
                                foreground=BAD if warn else DIM)
 
     def _show_result(self, r):
@@ -603,9 +669,9 @@ class App:
             return
         self._write('%s: %s\n' % (r['heard'], r['said']), 'said')
         self._write('%s: %s\n' % (r['code'], r['out']), 'out')
-        self.status.set('%.0f ms total (stt %.0f / mt %.0f / tts %.0f)  %.1f s audio%s'
-                        % (r['total'], r['stt'], r['mt'], r['tts'], r['secs'],
-                           '  %d dropped blocks' % r['drops'] if r['drops'] else ''))
+        self.status.set(self.T(
+            'timing', r['total'], r['stt'], r['mt'], r['tts'], r['secs'],
+            self.T('drops', r['drops']) if r['drops'] else ''))
 
     def quit(self):
         self._save_state()
