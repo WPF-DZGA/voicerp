@@ -1,0 +1,14 @@
+# core
+faster-whisper>=1.2
+argostranslate>=1.11
+piper-tts>=1.8
+sounddevice>=0.5
+numpy>=2.0
+pynput>=1.8
+
+# GPU for faster-whisper (CUDA 12). Skip for CPU-only; bridge.py falls back.
+nvidia-cublas-cu12
+nvidia-cudnn-cu12
+
+# only needed by tools/ diagnostics
+scipy>=1.15

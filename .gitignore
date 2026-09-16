@@ -1,0 +1,25 @@
+# models and downloads - multi-GB, fetched by the setup scripts
+voices/
+whisper/
+modules/
+model_dir/
+*.onnx
+*.onnx.json
+*.pt
+*.pak
+*.zip
+
+# python
+venv/
+__pycache__/
+*.pyc
+
+# runtime junk
+tmp/
+*.log
+*.err
+*.wav
+*.mp3
+
+# machine-specific
+langs_broken.json

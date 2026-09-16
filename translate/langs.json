@@ -1,0 +1,224 @@
+{
+ "bg": {
+  "voice": "bg_BG-dimitar-medium.onnx",
+  "path": "bg/bg_BG/dimitar/medium/bg_BG-dimitar-medium",
+  "label": "Bulgarian",
+  "gender": "m"
+ },
+ "ca": {
+  "voice": "ca_ES-upc_ona-medium.onnx",
+  "path": "ca/ca_ES/upc_ona/medium/ca_ES-upc_ona-medium",
+  "label": "Catalan",
+  "gender": "f"
+ },
+ "cs": {
+  "voice": "cs_CZ-kasandra-medium.onnx",
+  "path": "cs/cs_CZ/kasandra/medium/cs_CZ-kasandra-medium",
+  "label": "Czech",
+  "gender": "f"
+ },
+ "da": {
+  "voice": "da_DK-talesyntese-medium.onnx",
+  "path": "da/da_DK/talesyntese/medium/da_DK-talesyntese-medium",
+  "label": "Danish",
+  "gender": "?"
+ },
+ "de": {
+  "voice": "de_DE-thorsten-medium.onnx",
+  "path": "de/de_DE/thorsten/medium/de_DE-thorsten-medium",
+  "label": "German",
+  "gender": "m"
+ },
+ "el": {
+  "voice": "el_GR-rapunzelina-medium.onnx",
+  "path": "el/el_GR/rapunzelina/medium/el_GR-rapunzelina-medium",
+  "label": "Greek",
+  "gender": "f"
+ },
+ "es": {
+  "voice": "es_ES-sharvard-medium.onnx",
+  "path": "es/es_ES/sharvard/medium/es_ES-sharvard-medium",
+  "label": "Spanish",
+  "gender": "f"
+ },
+ "et": {
+  "voice": "et_EE-news-medium.onnx",
+  "path": "et/et_EE/news/medium/et_EE-news-medium",
+  "label": "Estonian",
+  "gender": "?"
+ },
+ "eu": {
+  "voice": "eu_ES-maider-medium.onnx",
+  "path": "eu/eu_ES/maider/medium/eu_ES-maider-medium",
+  "label": "Basque",
+  "gender": "f"
+ },
+ "fi": {
+  "voice": "fi_FI-harri-medium.onnx",
+  "path": "fi/fi_FI/harri/medium/fi_FI-harri-medium",
+  "label": "Finnish",
+  "gender": "m"
+ },
+ "fr": {
+  "voice": "fr_FR-siwis-medium.onnx",
+  "path": "fr/fr_FR/siwis/medium/fr_FR-siwis-medium",
+  "label": "French",
+  "gender": "f"
+ },
+ "hu": {
+  "voice": "hu_HU-anna-medium.onnx",
+  "path": "hu/hu_HU/anna/medium/hu_HU-anna-medium",
+  "label": "Hungarian",
+  "gender": "f"
+ },
+ "it": {
+  "voice": "it_IT-paola-medium.onnx",
+  "path": "it/it_IT/paola/medium/it_IT-paola-medium",
+  "label": "Italian",
+  "gender": "f"
+ },
+ "lv": {
+  "voice": "lv_LV-aivars-medium.onnx",
+  "path": "lv/lv_LV/aivars/medium/lv_LV-aivars-medium",
+  "label": "Latvian",
+  "gender": "m"
+ },
+ "nl": {
+  "voice": "nl_BE-nathalie-medium.onnx",
+  "path": "nl/nl_BE/nathalie/medium/nl_BE-nathalie-medium",
+  "label": "Dutch",
+  "gender": "f"
+ },
+ "nb": {
+  "voice": "no_NO-talesyntese-medium.onnx",
+  "path": "no/no_NO/talesyntese/medium/no_NO-talesyntese-medium",
+  "label": "Norwegian",
+  "gender": "?"
+ },
+ "pl": {
+  "voice": "pl_PL-gosia-medium.onnx",
+  "path": "pl/pl_PL/gosia/medium/pl_PL-gosia-medium",
+  "label": "Polish",
+  "gender": "f"
+ },
+ "pt": {
+  "voice": "pt_BR-cadu-medium.onnx",
+  "path": "pt/pt_BR/cadu/medium/pt_BR-cadu-medium",
+  "label": "Portuguese",
+  "gender": "m"
+ },
+ "ro": {
+  "voice": "ro_RO-mihai-medium.onnx",
+  "path": "ro/ro_RO/mihai/medium/ro_RO-mihai-medium",
+  "label": "Romanian",
+  "gender": "m"
+ },
+ "ru": {
+  "voice": "ru_RU-irina-medium.onnx",
+  "path": "ru/ru_RU/irina/medium/ru_RU-irina-medium",
+  "label": "Russian",
+  "gender": "f"
+ },
+ "sk": {
+  "voice": "sk_SK-lili-medium.onnx",
+  "path": "sk/sk_SK/lili/medium/sk_SK-lili-medium",
+  "label": "Slovak",
+  "gender": "f"
+ },
+ "sl": {
+  "voice": "sl_SI-artur-medium.onnx",
+  "path": "sl/sl_SI/artur/medium/sl_SI-artur-medium",
+  "label": "Slovenian",
+  "gender": "m"
+ },
+ "sq": {
+  "voice": "sq_AL-edon-medium.onnx",
+  "path": "sq/sq_AL/edon/medium/sq_AL-edon-medium",
+  "label": "Albanian",
+  "gender": "m"
+ },
+ "sv": {
+  "voice": "sv_SE-lisa-medium.onnx",
+  "path": "sv/sv_SE/lisa/medium/sv_SE-lisa-medium",
+  "label": "Swedish",
+  "gender": "f"
+ },
+ "uk": {
+  "voice": "uk_UA-ukrainian_tts-medium.onnx",
+  "path": "uk/uk_UA/ukrainian_tts/medium/uk_UA-ukrainian_tts-medium",
+  "label": "Ukrainian",
+  "gender": "f"
+ },
+ "en": {
+  "voice": "en_US-hfc_female-medium.onnx",
+  "path": "en/en_US/hfc_female/medium/en_US-hfc_female-medium",
+  "label": "English",
+  "gender": "f"
+ },
+ "ko": {
+  "voice": "ko_KR-kss-medium.onnx",
+  "path": "ko/ko_KR/kss/medium/ko_KR-kss-medium",
+  "label": "Korean",
+  "gender": "f"
+ },
+ "zh": {
+  "voice": "zh_CN-huayan-medium.onnx",
+  "path": "zh/zh_CN/huayan/medium/zh_CN-huayan-medium",
+  "label": "Chinese",
+  "gender": "f"
+ },
+ "vi": {
+  "voice": "vi_VN-vais1000-medium.onnx",
+  "path": "vi/vi_VN/vais1000/medium/vi_VN-vais1000-medium",
+  "label": "Vietnamese",
+  "gender": "f"
+ },
+ "hi": {
+  "voice": "hi_IN-priyamvada-medium.onnx",
+  "path": "hi/hi_IN/priyamvada/medium/hi_IN-priyamvada-medium",
+  "label": "Hindi",
+  "gender": "f"
+ },
+ "bn": {
+  "voice": "bn_BD-google-medium.onnx",
+  "path": "bn/bn_BD/google/medium/bn_BD-google-medium",
+  "label": "Bengali",
+  "gender": "?"
+ },
+ "ur": {
+  "voice": "ur_PK-aegis_female-medium.onnx",
+  "path": "ur/ur_PK/aegis_female/medium/ur_PK-aegis_female-medium",
+  "label": "Urdu",
+  "gender": "f"
+ },
+ "id": {
+  "voice": "id_ID-news_tts-medium.onnx",
+  "path": "id/id_ID/news_tts/medium/id_ID-news_tts-medium",
+  "label": "Indonesian",
+  "gender": "?"
+ },
+ "fa": {
+  "voice": "fa_IR-ganji-medium.onnx",
+  "path": "fa/fa_IR/ganji/medium/fa_IR-ganji-medium",
+  "label": "Farsi",
+  "gender": "m"
+ },
+ "he": {
+  "voice": "he_IL-saspeech-medium.onnx",
+  "path": "he/he_IL/saspeech/medium/he_IL-saspeech-medium",
+  "label": "Hebrew",
+  "gender": "?"
+ },
+ "ar": {
+  "voice": "ar_JO-kareem-medium.onnx",
+  "path": "ar/ar_JO/kareem/medium/ar_JO-kareem-medium",
+  "label": "Arabic",
+  "gender": "m"
+ },
+ "tr": {
+  "voice": "tr_TR-dfki-medium.onnx",
+  "path": "tr/tr_TR/dfki/medium/tr_TR-dfki-medium",
+  "label": "Turkish",
+  "gender": "?"
+ }
+}

@@ -1,0 +1,229 @@
+VOICE RP RIG - superpc
+======================
+Two independent tools. Both feed CABLE Input, which is the game microphone.
+
+--------------------------------------------------------------------
+A) VOICE CHANGER  (real time, your words, different person)
+--------------------------------------------------------------------
+LAUNCH        D:\VoiceRP\start-voicerp.bat
+UI            http://127.0.0.1:18000
+CHAIN         Razer Seiren Elite -> VCClient (RVC, RTX 4080) -> CABLE Input
+LATENCY       ~190 ms at chunk 0.1
+
+COMMANDS   powershell -File D:\VoiceRP\voice.ps1 ...
+  -List          show installed voices
+  -Slot 2        switch voice live
+  -Pitch 4       pitch in semitones (-12..12)
+  -Chunk 0.1     buffer; 0.05 tighter, 0.2 safer
+  -Bypass        toggle your real voice through
+  -Status        what is running
+
+VOICES (female, permissive licence, RVC ONNX)
+  0 Kikoto Kurage   1 Mahiro   2 Tokina Shigure (best operator fit)
+  3 Amitaro         4 Tsukuyomi
+
+--------------------------------------------------------------------
+B) TRANSLATE BRIDGE  (push to talk, speech translation)
+--------------------------------------------------------------------
+LAUNCH        D:\VoiceRP\translate.bat
+SELF TEST     D:\VoiceRP\translate-selftest.bat   (canned line, no hotkeys)
+MIC METER     D:\VoiceRP\mic-meter.bat            (live dB - use this first)
+CHAIN         Razer -> faster-whisper (CUDA) -> Argos MT -> Piper TTS -> CABLE Input
+MEASURED      733-1006 ms end to end, fully offline, no API cost
+
+WORKS EVERYWHERE, NOT JUST IN THE GAME.
+CABLE Input feeds CABLE Output, which is the Windows default microphone, so
+Discord, Teams, a browser, OBS - anything using the default mic - gets the
+translated voice. The hotkeys are global, whatever window has focus.
+
+KEYS
+  F9   hold to talk
+  F3   next TARGET language (cycles all 39)
+  F1   cycle SOURCE language: English -> Polish -> auto-detect
+  F5 Russian   F4 Ukrainian   F6 Spanish   F7 French   F8 Polish   F2 English
+  F11  list every language + current state          F12  quit
+
+39 LANGUAGES INSTALLED
+  European  Albanian Basque Bulgarian Catalan Czech Danish Dutch English
+            Estonian Finnish French German Greek Hungarian Italian Latvian
+            Norwegian Polish Portuguese Romanian Russian Slovak Slovenian
+            Spanish Swedish Ukrainian
+  Asian /   Arabic Bengali Chinese Farsi Hebrew Hindi Indonesian Japanese
+  Mid-East  Korean Thai Turkish Urdu Vietnamese
+  F11 prints the list with each voice's gender (f/m/?) and its quick key.
+  A language is only listed when BOTH its Piper voice file exists AND an
+  Argos en->X pack is installed - either alone is useless, so bridge.py
+  checks at startup instead of failing mid-sentence.
+
+ADDING OR CHANGING A LANGUAGE - no code edit needed
+  The table is D:\VoiceRP\xlate\langs.json:
+      "ru": {"voice":"ru_RU-irina-medium.onnx",
+             "path":"ru/ru_RU/irina/medium/ru_RU-irina-medium",
+             "label":"Russian","gender":"f"}
+  To swap a voice (e.g. Russian male): change voice+path to another entry from
+  huggingface.co/rhasspy/piper-voices, then run
+      D:\VoiceRP\xlate\venv\Scripts\python.exe D:\VoiceRP\xlate\getvoices.py
+  It only fetches what is missing. For a new language also run getargos.py.
+  Where no female voice exists in Piper (German, Portuguese, Romanian,
+  Bulgarian, Latvian, Slovenian, Albanian, Arabic, Farsi) the entry is male -
+  that is a Piper catalogue limit, not a setting.
+
+TESTING
+  translate-selftest.bat                      every installed language
+  bridge.py --selftest --only ru,ja,zh        just those
+
+SOURCE LANGUAGES  English and Polish are installed both ways, so Polish in ->
+Russian out works too (it pivots through English). Auto-detect lets whisper
+pick, which is slower and occasionally wrong on one-word callouts.
+
+TRANSLATION QUALITY  Russian, Spanish, French, Polish are solid.
+Ukrainian is the weakest Argos pack - it leaves callsigns untranslated.
+
+HOW TO HEAR IT YOURSELF
+Do NOT let the app open a second audio stream - every variant crackled
+(Arctis endpoint, Sonar Aux, Sonar Chat). Use Windows instead:
+  Win+R -> mmsys.cpl -> Recording tab -> CABLE Output -> Properties
+  -> Listen tab -> tick "Listen to this device" -> pick your headset
+That monitors the voice changer AND the translator through one solid path.
+Untick it if you ever hear yourself doubled.
+
+--------------------------------------------------------------------
+GOTCHAS LEARNED THE HARD WAY
+--------------------------------------------------------------------
+ 1. wasapi_exclude_emabled MUST stay false or PortAudio dies with
+    "Invalid sample rate [PaErrorCode -9997]".
+ 2. VCClient reads module state AND the device list only at startup.
+    Plug in USB audio -> restart main.exe.
+ 3. PortAudio device indices shift on replug. start-voicerp.ps1 and bridge.py
+    both resolve devices BY NAME. Never hardcode an index.
+ 4. MONITOR IS OFF ON PURPOSE. Two WASAPI streams into the wireless Arctis
+    (VCClient monitor + TTS playback) caused loud crackling. If you want to
+    hear yourself, monitor on a WIRED output, not the Nova 7.
+ 5. Piper output runs hot and clipped CABLE Input at 0 dBFS. bridge.py now
+    peak-normalises to -3 dBFS. Do not remove that.
+ 6. sounddevice sd.play() uses ONE global stream - playing to two devices with
+    it silently kills the first. bridge.py opens its own OutputStream per device.
+ 7. Do not kill processes by the name "python" on this box. The Windows-MCP
+    server is a python.exe; killing it drops the remote session. Kill by PID.
+ 8. Reforger has no reliable in-game mic picker; it follows the Windows default,
+    which is now CABLE Output. Re-run mic-voice.bat if Sonar steals it back.
+ 9. Discord must be pinned to "SteelSeries Sonar - Microphone" in its own audio
+    settings, not "Default".
+10. convert_file in the VCClient std 2.2.2-beta build is broken
+    (Timer.__init__ got an unexpected keyword argument 'enable'). Use the
+    CUDA build; offline file conversion is not needed anyway.
+
+SAMPLES        D:\VoiceRP\test\
+  voice_source_male.mp3        the input line
+  voice_slot0/2/4.mp3          voice changer output
+  xlate_all_languages.mp3      RU, ES, FR, PL, UK as the game hears them
+
+NOT DONE
+  - A Slavic-accented voice-changer model. The five RVC voices are Japanese
+    voice banks and carry a faint Japanese timbre on English. Train one with
+    beatrice-trainer, or source an RVC model, if that matters.
+11. The Razer Seiren Elite delivered pure silence at one point (-83 dB mean)
+    while Windows showed level 100% and unmuted. It is the hardware side:
+    the physical GAIN knob on the mic, its MUTE button, or Razer Synapse.
+    Run mic-meter.bat and watch the dB before debugging anything in software.
+12. whisper's vad_filter=True silently discarded quiet lines and printed
+    "(nothing heard)". It is now OFF, and the bridge prints the input peak in dB
+    on every line so a level problem is visible immediately.
+13. The bridge prints "input peak N dB" every line. Read it:
+      above  0 dB  = clipped at the mic. Turn the SEIREN GAIN KNOB DOWN.
+                     Clipped audio makes whisper hallucinate whole sentences
+                     ("THANK YOU FOR WATCHING!", "Puss, puss, puss").
+      -30..-6 dB   = the sweet spot.
+      below -60 dB = nothing is arriving; check mute and gain.
+    Audio is now always normalised to -6 dBFS before the ASR, and segments with
+    no_speech_prob > 0.6 or avg_logprob < -1.0 are dropped as hallucinations.
+14. Windows recording level for the Seiren is set to 40 percent on purpose.
+    At 100 percent it handed WASAPI float samples 8x past full scale (+18 dB).
+15. THE BIG ONE. Windows 11 binds an audio-effect processor called
+    "Voice Clarity" (Microsoft, oem120.inf, APO class AudioProcessingObject)
+    to microphone capture endpoints. On the Razer Seiren Elite it gated the
+    signal to digital zero at times, and otherwise stripped the speech band:
+    measured 0-300 Hz at 34-39 dB while 1-3 kHz sat at 9 dB. whisper returned
+    zero segments and detected the language as "nn".
+    It lives in the Windows audio engine, so WASAPI, DirectSound and MME all
+    get the damaged stream - which is why every API agreed and the problem
+    looked like a code bug for an hour.
+    Check for it:
+      reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture\{7682c927-3097-4567-bc27-b29180246a4e}\FxProperties"
+      a VocaEffectPack value means Voice Clarity is attached
+    Turn it off:
+      Settings > System > Sound > Input > click the mic > Audio enhancements = Off
+    Diagnosis that found it: dump the spectrum of the captured audio in bands.
+    A 30 dB tilt toward sub-300 Hz is processing damage, not a level problem.
+16. Empirically verify a capture rate before blaming pitch: count frames per
+    wall-clock second. The Seiren claimed 48000 and really delivered 48006 Hz,
+    which ruled out a resampling bug in two minutes.
+17. Capture is callback-driven now, and the stream is opened ON THE MAIN THREAD.
+    Starting a WASAPI InputStream from a worker thread fails with
+    PaErrorCode -9999 "Unanticipated host error" and the message even blames
+    the WDM-KS backend, which is a red herring - the device was correct
+    (idx 73, Windows WASAPI). PortAudio initialises COM on whichever thread
+    called Pa_Initialize, so the stream must be created there.
+    bridge.py: open_input_stream() runs at module level, recorder() only drains.
+18. The old capture looped on a blocking stream.read() at the WASAPI minimum
+    buffer and lost input blocks when the whisper thread held the GIL. Gapped
+    audio makes whisper hallucinate. The callback version buffers at
+    latency=0.2 and now PRINTS "WARNING: n dropped input blocks" when it
+    happens, so this is visible instead of silent.
+19. Debugging order that actually worked, for next time:
+      a. swap the mic (--mic arctis) - if both mics fail, the bug is in the code
+      b. feed a known-good WAV through the same code path (--selftest)
+      c. compare resamplers on files, not live
+      d. count frames per wall-clock second to verify the real sample rate
+      e. dump the spectrum in bands - a bass-heavy tilt means processing damage
+    Editing this file from PowerShell: use base64 + a python splice script.
+    PowerShell .Replace on multi-line blocks silently misses CRLF files, and
+    here-strings mangle python quotes.
+20. THE CRACKLE. Piper must render to a FILE, never to stdout.
+    `piper.exe -f -` writes binary WAV to stdout, and Windows opens stdout in
+    TEXT mode, so every 0x0A byte in the PCM becomes 0x0D 0x0A. The inserted
+    bytes misalign every sample after them and int16 values flip across the
+    whole range. Measured on one 4.5 s line:
+        stdout (-f -)   8621 jumps > 32768   e.g. 32514 -> -32513
+        file (-f path)     0 jumps
+    ~1800 full-scale clicks per second - that was "90% crackling, some words".
+    bridge.py synth() now uses tempfile.mkstemp in D:\VoiceRP\xlate\tmp.
+21. Level metrics CANNOT see crackle. volumedetect, mean/max volume and flat
+    factor all called the corrupted audio clean, because the level really was
+    fine. To detect glitches, count sample-to-sample slope against what the
+    signal can physically produce:
+        a 440 Hz sine at peak A has max slope 2*pi*440/48000*A
+        anything above ~4x that is a glitch
+    Tools left behind for this:
+        tone.py <device>   play a clean tone to one output (isolates a path)
+        cabletest.py       tone through VB-Cable, counts glitches at the far end
+        clip.py            counts wraps/clipping in raw piper output
+    Verified with these: VB-Cable is transparent (0 glitches in 124k samples,
+    tone-to-junk 95.4 dB), Sonar Gaming and the Arctis both play a clean tone.
+    Every one of those was suspected and cleared before the real cause was found.
+22. DISCORD - they hear the translation, not you.
+    Discord > Settings > Voice & Video:
+      Input Device            CABLE Output (VB-Audio Virtual Cable)
+      Input Mode              Voice Activity
+      Input Sensitivity       manual, slider near -55 dB
+      Noise Suppression       None        (Krisp gates synthetic speech)
+      Echo Cancellation       off
+      Noise Reduction         off
+      Automatic Gain Control  off
+      Advanced Voice Activity off
+    Your Razer mic is never selected in Discord, so your own voice cannot reach
+    it. Discord only hears what is in the cable.
+    IMPORTANT: if VCClient is also running it puts your live converted voice in
+    the same cable, and Discord would carry both. For translation only, stop it:
+      powershell -File D:\VoiceRP\voice.ps1 -Status     check
+      (close the VCClient console window to stop it)
+    Krisp and AGC are the usual reason TTS sounds chopped or half-missing in
+    Discord - they are tuned for a human at a microphone, not for a synthesised
+    stream arriving in bursts.
+23. Piper: file output costs nothing. Measured over 5 runs each, same line:
+      stdout 482.0 ms median   temp file 490.3 ms median
+    ~8 ms, inside run-to-run noise. Piping cannot be repaired on our side - the
+    CRLF expansion happens in piper.exe's own CRT before we see the bytes, and
+    an inserted 0x0D is indistinguishable from real PCM data. The fix would have
+    to be _setmode(_O_BINARY) inside piper.
+
