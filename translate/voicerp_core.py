@@ -54,6 +54,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 VOICES_DIR = os.path.join(HERE, 'voices')
 WHISPER_DIR = os.path.join(HERE, 'whisper')
 LANGS_JSON = os.path.join(HERE, 'langs.json')
+PERSONAS_JSON = os.path.join(HERE, 'personas.json')
 
 ASR_SR = 16000
 SRC_OPTS = [('en', 'English'), ('pl', 'Polish'), (None, 'auto-detect')]
@@ -117,6 +118,35 @@ def voices_on_disk():
     return by_lang
 
 
+def load_personas():
+    """Archetypes and speaker-set names. Missing file is not fatal - the app
+    just runs with the one built-in neutral persona."""
+    try:
+        d = json.load(open(PERSONAS_JSON, encoding='utf-8'))
+        return d.get('archetypes', {}), d.get('speaker_sets', {})
+    except Exception:
+        return {'neutral': {'label': 'Neutral', 'length_scale': 1.0,
+                            'noise_scale': 0.667, 'noise_w': 0.8,
+                            'pitch': 0.0, 'effect': None}}, {}
+
+
+def speakers_for(voice):
+    """name -> id for a multi-speaker model, empty for a single-speaker one.
+
+    Read from the voice's own .onnx.json, so a model downloaded later needs no
+    code change.
+    """
+    cfg = os.path.join(VOICES_DIR, voice + '.json' if voice.endswith('.onnx')
+                       else voice + '.onnx.json')
+    try:
+        d = json.load(open(cfg, encoding='utf-8'))
+    except Exception:
+        return {}
+    if (d.get('num_speakers') or 1) <= 1:
+        return {}
+    return dict(d.get('speaker_id_map') or {})
+
+
 def load_langs():
     """Languages usable right now.
 
@@ -162,12 +192,16 @@ class Engine:
         self.on_state = on_state or (lambda s: None)
         self.asr = None
         self.asr_device = None
+        self._SynthesisConfig = None
         self.argos = None
         self.langs = {}
         self.skipped = []
         self.target = 'ru'
         self.src_i = 0
         self.voice_override = {}      # code -> voice filename
+        self.speaker_override = {}    # voice filename -> speaker NAME
+        self.personas, self.speaker_sets = load_personas()
+        self.persona = 'neutral'
         self.dev_in = None
         self.dev_out = None
         self.dev_mon = None           # optional second sink, e.g. the headset
@@ -185,8 +219,13 @@ class Engine:
         self.on_state('loading models...')
         from faster_whisper import WhisperModel
         from piper import PiperVoice
+        try:
+            from piper import SynthesisConfig
+        except ImportError:
+            SynthesisConfig = None       # older piper: prosody dials unavailable
         from argostranslate import translate as argos
         self._PiperVoice = PiperVoice
+        self._SynthesisConfig = SynthesisConfig
         self.argos = argos
         for dev, ct in (('cuda', 'float16'), ('cpu', 'int8')):
             try:
@@ -269,18 +308,62 @@ class Engine:
             raise RuntimeError('monitor output not found: %s' % name)
         self.dev_mon = d
 
-    def synth(self, txt, voice):
-        """In-process piper. Never shell out: piper.exe writes WAV to stdout and
-        Windows text mode expands 0x0A to 0x0D 0x0A, misaligning every sample
-        after it (8621 int16 jumps > 32768 in 4.5 s = ~1800 clicks/second)."""
+    def persona_cfg(self, persona=None):
+        """The archetype dict for a persona id, falling back to neutral."""
+        p = persona or self.persona
+        return self.personas.get(p) or self.personas.get('neutral') or {}
+
+    def speaker_id_for(self, voice, persona=None):
+        """Resolve a speaker NAME to piper's integer id.
+
+        Order: an explicit user choice for this voice, then the archetype's
+        prefer_speaker hint (that is how German gets a real whispered or drunk
+        recording), then None for a single-speaker model.
+        """
+        smap = speakers_for(voice)
+        if not smap:
+            return None
+        want = self.speaker_override.get(voice)
+        if want is None:
+            want = (self.persona_cfg(persona).get('prefer_speaker') or {}).get(voice)
+        if want is None:
+            return None
+        if want in smap:
+            return int(smap[want])
+        try:
+            i = int(want)
+            return i if 0 <= i < len(smap) else None
+        except (TypeError, ValueError):
+            return None
+
+    def synth(self, txt, voice, persona=None):
+        """In-process piper, then the persona shaping chain.
+
+        Never shell out: piper.exe writes WAV to stdout and Windows text mode
+        expands 0x0A to 0x0D 0x0A, misaligning every sample after it (8621
+        int16 jumps > 32768 in 4.5 s = ~1800 clicks/second).
+        """
+        cfg = self.persona_cfg(persona)
         try:
             v = self._voice_cache.get(voice)
             if v is None:
                 v = self._PiperVoice.load(os.path.join(VOICES_DIR, voice))
                 self._voice_cache[voice] = v
+
+            syn = None
+            if self._SynthesisConfig is not None:
+                syn = self._SynthesisConfig(
+                    speaker_id=self.speaker_id_for(voice, persona),
+                    length_scale=cfg.get('length_scale'),
+                    noise_scale=cfg.get('noise_scale'),
+                    noise_w_scale=cfg.get('noise_w'))
+
             buf = io.BytesIO()
             with wave.open(buf, 'wb') as w:
-                v.synthesize_wav(txt, w)
+                if syn is not None:
+                    v.synthesize_wav(txt, w, syn_config=syn)
+                else:
+                    v.synthesize_wav(txt, w)
             buf.seek(0)
             with wave.open(buf, 'rb') as w:
                 sr = w.getframerate()
@@ -289,7 +372,17 @@ class Engine:
             return None, '%s: %s' % (type(e).__name__, str(e)[:90])
         if len(pcm) == 0:
             return None, 'empty PCM'
-        return pcm.astype(np.float32) / 32768.0, sr
+
+        sig = pcm.astype(np.float32) / 32768.0
+        if cfg.get('pitch') or cfg.get('effect') or cfg.get('gain', 1.0) != 1.0:
+            try:
+                import dsp
+                sig = dsp.apply_chain(sig, sr, pitch=cfg.get('pitch') or 0.0,
+                                      effect=cfg.get('effect'),
+                                      gain=cfg.get('gain', 1.0))
+            except Exception as e:
+                self.on_log('persona shaping skipped: %s' % e)
+        return sig, sr
 
     def play(self, sig, sr):
         """Fan out to the cable and, optionally, the headset.
@@ -372,7 +465,7 @@ class Engine:
                 self.on_result({'error': 'no path %s->%s (%s)' % (heard, code, e)})
                 return
         t2 = time.time()
-        sig, sr = self.synth(out, self.voice_for(code))
+        sig, sr = self.synth(out, self.voice_for(code), self.persona)
         t3 = time.time()
         if sig is None:
             self.on_result({'error': 'TTS failed: %s' % sr})
@@ -441,7 +534,7 @@ class Engine:
                 except Exception:
                     pass
         t0 = time.time()
-        sig, sr = self.synth(text, self.voice_for(code))
+        sig, sr = self.synth(text, self.voice_for(code), self.persona)
         if sig is None:
             self.on_result({'error': 'TTS failed: %s' % sr})
             return

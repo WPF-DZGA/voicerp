@@ -67,6 +67,8 @@ class App:
             'src_i': self.engine.src_i,
             'target': self.engine.target, 'ptt': self.ptt.get(),
             'voices': self.engine.voice_override,
+            'persona': self.engine.persona,
+            'speakers': self.engine.speaker_override,
         })
         try:
             json.dump(self.state, open(CFG, 'w', encoding='utf-8'), indent=1)
@@ -175,8 +177,24 @@ class App:
         self.voice_box.grid(row=5, column=0, sticky='ew', pady=4)
         self.voice_box.bind('<<ComboboxSelected>>', self._pick_voice)
 
+        self._reg(ttk.Label(left, style='H.TLabel'), 'persona').grid(
+            row=6, column=0, sticky='w', pady=(8, 0))
+        self.persona = tk.StringVar()
+        self.persona_box = ttk.Combobox(left, textvariable=self.persona,
+                                        state='readonly', values=[])
+        self.persona_box.grid(row=7, column=0, sticky='ew', pady=4)
+        self.persona_box.bind('<<ComboboxSelected>>', self._pick_persona)
+
+        self._reg(ttk.Label(left, style='Dim.TLabel'), 'speaker').grid(
+            row=8, column=0, sticky='w')
+        self.speaker = tk.StringVar()
+        self.speaker_box = ttk.Combobox(left, textvariable=self.speaker,
+                                        state='readonly', values=[])
+        self.speaker_box.grid(row=9, column=0, sticky='ew', pady=4)
+        self.speaker_box.bind('<<ComboboxSelected>>', self._pick_speaker)
+
         row = ttk.Frame(left, style='P.TFrame')
-        row.grid(row=6, column=0, sticky='ew', pady=(4, 0))
+        row.grid(row=10, column=0, sticky='ew', pady=(4, 0))
         self._reg(ttk.Button(row, command=self.test), 'test').pack(side='left')
         self._reg(ttk.Button(row, command=self.reload_langs),
                   'reload').pack(side='left', padx=6)
@@ -283,6 +301,10 @@ class App:
         self.engine.voice_override = {
             k: v for k, v in (self.state.get('voices') or {}).items()
             if k in self.engine.langs}
+        if self.state.get('persona') in self.engine.personas:
+            self.engine.persona = self.state['persona']
+        self.engine.speaker_override = dict(self.state.get('speakers') or {})
+        self._refresh_personas()
         try:
             self.engine.src_i = int(self.state.get('src_i', 0)) % len(core.SRC_OPTS)
         except Exception:
@@ -345,6 +367,7 @@ class App:
             self.lvl_lbl.configure(text=self.T('peak_none'))
         else:
             self._show_level(self._last_db)
+        self._refresh_personas()
         self.src_box['values'] = self._src_names()
         self.src.set(self._src_names()[self.engine.src_i])
         self._refill()
@@ -443,9 +466,75 @@ class App:
         vs = self.engine.langs[code]['voices']
         self.voice_box['values'] = vs
         self.voice.set(self.engine.voice_for(code))
+        self._refresh_speakers()
 
     def _pick_voice(self, *_):
         self.engine.voice_override[self.engine.target] = self.voice.get()
+        self._refresh_speakers()
+        self._save_state()
+
+    def _persona_names(self):
+        """Ordered (label, id) for the picker, neutral first."""
+        ids = list(self.engine.personas)
+        ids.sort(key=lambda p: (p != 'neutral', p))
+        key = 'label_pl' if self.uilang == 'pl' else 'label'
+        return [(self.engine.personas[p].get(key)
+                 or self.engine.personas[p].get('label') or p, p) for p in ids]
+
+    def _refresh_personas(self):
+        rows = self._persona_names()
+        self._persona_ids = [pid for _, pid in rows]
+        self.persona_box['values'] = [lab for lab, _ in rows]
+        if self.engine.persona in self._persona_ids:
+            self.persona.set(rows[self._persona_ids.index(self.engine.persona)][0])
+        elif rows:
+            self.engine.persona = self._persona_ids[0]
+            self.persona.set(rows[0][0])
+
+    def _pick_persona(self, *_):
+        labels = self.persona_box['values']
+        if self.persona.get() in labels:
+            self.engine.persona = self._persona_ids[list(labels).index(self.persona.get())]
+        cfg = self.engine.persona_cfg()
+        self.status.set(self.T('persona_set', cfg.get('label', self.engine.persona)))
+        if cfg.get('note'):
+            self._write(cfg['note'] + '\n', 'said')
+        self._refresh_speakers()
+        self._save_state()
+
+    def _refresh_speakers(self):
+        """Only multi-speaker models have anything to choose here."""
+        voice = self.engine.voice_for(self.engine.target)
+        smap = core.speakers_for(voice)
+        if not smap:
+            self.speaker_box['values'] = [self.T('spk_none')]
+            self.speaker.set(self.T('spk_none'))
+            self.speaker_box.configure(state='disabled')
+            return
+        self.speaker_box.configure(state='readonly')
+        groups = ((self.engine.speaker_sets.get(voice.replace('.onnx', '')) or {})
+                  .get('groups') or {})
+        tag = {}
+        for gname, members in groups.items():
+            for m in members:
+                tag[m] = gname
+        names = sorted(smap, key=lambda k: (tag.get(k, 'zzz'), smap[k]))
+        shown = ['%s  %s' % (nm, tag[nm]) if nm in tag else nm for nm in names]
+        self._speaker_names = names
+        self.speaker_box['values'] = shown
+        cur = self.engine.speaker_override.get(voice)
+        if cur in names:
+            self.speaker.set(shown[names.index(cur)])
+        else:
+            self.speaker.set(shown[0])
+            self.engine.speaker_override[voice] = names[0]
+
+    def _pick_speaker(self, *_):
+        voice = self.engine.voice_for(self.engine.target)
+        vals = list(self.speaker_box['values'])
+        if self.speaker.get() in vals:
+            self.engine.speaker_override[voice] = \
+                self._speaker_names[vals.index(self.speaker.get())]
         self._save_state()
 
     def reload_langs(self):

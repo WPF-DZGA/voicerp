@@ -1,0 +1,127 @@
+{
+  "_comment": [
+    "Two tiers on purpose.",
+    "An ARCHETYPE is language-independent: it shapes whatever voice the target",
+    "language has, via piper's SynthesisConfig plus the pitch/effect chain in",
+    "dsp.py. So 'old farmer' works in all 37 languages, not just English.",
+    "A SPEAKER SET is the bonus on top: when the language has a multi-speaker",
+    "model, these name the ids so you pick a person rather than a number.",
+    "length_scale > 1 is slower. noise_scale is timbre variation, noise_w is",
+    "timing variation - raise both for rambling, drop both for clipped and",
+    "disciplined. pitch is in semitones, negative is deeper."
+  ],
+  "version": 1,
+
+  "archetypes": {
+    "neutral": {
+      "label": "Neutral", "label_pl": "Neutralny",
+      "length_scale": 1.0, "noise_scale": 0.667, "noise_w": 0.8,
+      "pitch": 0.0, "effect": null,
+      "note": "Piper's own defaults. The baseline to judge the rest against."
+    },
+    "radio_operator": {
+      "label": "Radio operator", "label_pl": "Radiooperator",
+      "length_scale": 0.92, "noise_scale": 0.55, "noise_w": 0.6,
+      "pitch": -0.5, "effect": "radio",
+      "note": "Band-limited to 350-3200 Hz. The band alone reads as a radio."
+    },
+    "military_nco": {
+      "label": "NCO, clipped", "label_pl": "Podoficer, urywany",
+      "length_scale": 0.85, "noise_scale": 0.45, "noise_w": 0.45,
+      "pitch": -1.5, "effect": "radio",
+      "note": "Fast, low variation, slightly deep. Sounds drilled."
+    },
+    "officer_calm": {
+      "label": "Officer, calm", "label_pl": "Oficer, spokojny",
+      "length_scale": 1.05, "noise_scale": 0.5, "noise_w": 0.5,
+      "pitch": -2.0, "effect": null,
+      "note": "Deliberate and deep, no radio - for face to face."
+    },
+    "gruff_veteran": {
+      "label": "Gruff veteran", "label_pl": "Zgorzknialy weteran",
+      "length_scale": 1.12, "noise_scale": 0.75, "noise_w": 0.9,
+      "pitch": -4.0, "effect": null,
+      "note": "The deepest that still sounds human. Below -5 it goes robotic."
+    },
+    "old_farmer": {
+      "label": "Old farmer", "label_pl": "Stary rolnik",
+      "length_scale": 1.25, "noise_scale": 0.85, "noise_w": 1.05,
+      "pitch": -2.5, "effect": null,
+      "note": "Slow and wandering. High noise_w is what makes it unhurried."
+    },
+    "young_recruit": {
+      "label": "Young recruit", "label_pl": "Mlody rekrut",
+      "length_scale": 0.95, "noise_scale": 0.8, "noise_w": 0.95,
+      "pitch": 2.5, "effect": null,
+      "note": "Higher and less controlled."
+    },
+    "panicked": {
+      "label": "Panicked", "label_pl": "Spanikowany",
+      "length_scale": 0.78, "noise_scale": 0.95, "noise_w": 1.15,
+      "pitch": 1.5, "effect": null,
+      "note": "Fast and ragged. Useful for a civilian under fire."
+    },
+    "wounded": {
+      "label": "Wounded", "label_pl": "Ranny",
+      "length_scale": 1.4, "noise_scale": 0.8, "noise_w": 1.0,
+      "pitch": -1.0, "effect": null, "gain": 0.6,
+      "note": "Slow and quiet. Quieter on purpose, so it carries less."
+    },
+    "cqb_whisper": {
+      "label": "Whisper, close quarters", "label_pl": "Szept, walka w budynku",
+      "length_scale": 1.1, "noise_scale": 0.6, "noise_w": 0.7,
+      "pitch": 0.5, "effect": null, "gain": 0.45,
+      "prefer_speaker": {"de_DE-thorsten_emotional-medium": "whisper"},
+      "note": "German gets a genuinely whispered model; elsewhere it is level only."
+    },
+    "long_range": {
+      "label": "Long range, bad signal", "label_pl": "Daleki zasieg, zly sygnal",
+      "length_scale": 0.95, "noise_scale": 0.6, "noise_w": 0.7,
+      "pitch": -1.0, "effect": "radio_heavy",
+      "note": "450-2800 Hz, driven hard. Deliberately trashy."
+    },
+    "drunk_civilian": {
+      "label": "Drunk civilian", "label_pl": "Pijany cywil",
+      "length_scale": 1.35, "noise_scale": 1.0, "noise_w": 1.3,
+      "pitch": -1.5, "effect": null,
+      "prefer_speaker": {"de_DE-thorsten_emotional-medium": "drunk"},
+      "note": "German has an actual drunk recording in thorsten_emotional."
+    },
+    "angry_shout": {
+      "label": "Angry", "label_pl": "Wsciekly",
+      "length_scale": 0.82, "noise_scale": 0.9, "noise_w": 0.6,
+      "pitch": 1.0, "effect": null,
+      "prefer_speaker": {"de_DE-thorsten_emotional-medium": "angry"},
+      "note": "German has an actual angry recording."
+    }
+  },
+
+  "speaker_sets": {
+    "de_DE-thorsten_emotional-medium": {
+      "_note": "One speaker, eight deliveries. The ids ARE the emotions.",
+      "groups": {
+        "Emotions": ["neutral", "angry", "amused", "disgusted", "drunk",
+                     "sleepy", "surprised", "whisper"]
+      }
+    },
+    "en_US-l2arctic-medium": {
+      "_note": "L2-ARCTIC: non-native English. Groups are the dataset's own L1 split - trust your ears over this table.",
+      "groups": {
+        "Arabic accent":     ["ABA", "SKA", "YBAA", "ZHAA"],
+        "Mandarin accent":   ["BWC", "LXC", "NCC", "TXHC"],
+        "Hindi accent":      ["ASI", "RRBI", "SVBI", "TNI"],
+        "Korean accent":     ["HJK", "HKK", "YDCK", "YKWK"],
+        "Spanish accent":    ["EBVS", "ERMS", "MBMPS", "NJS"],
+        "Vietnamese accent": ["HQTV", "PNV", "THV", "TLV"]
+      }
+    },
+    "en_GB-vctk-medium": {
+      "_note": "109 speakers, British and other regional accents. Audition them.",
+      "groups": {}
+    },
+    "en_US-libritts_r-medium": {
+      "_note": "904 American speakers. Far too many to name - audition and note the ids you like.",
+      "groups": {}
+    }
+  }
+}

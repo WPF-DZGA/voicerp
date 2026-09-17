@@ -29,3 +29,7 @@ iscc.out
 install.log
 build.log
 bootstrap-*.log
+
+translate/samples/
+persona.out
+persona.err

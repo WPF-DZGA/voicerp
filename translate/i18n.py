@@ -9,6 +9,10 @@ UI_LANGS = [('en', 'English'), ('pl', 'Polski')]
 
 S = {
     'en': {
+        'persona':       'PERSONA',
+        'speaker':       'Speaker / accent',
+        'persona_set':   'persona: %s',
+        'spk_none':      '(single voice)',
         'title':         'VoiceRP',
         'help_title':    'VoiceRP - settings and recommendations',
         'out_lang':      'OUTPUT LANGUAGE',
@@ -54,6 +58,10 @@ S = {
         'help_missing':  '# Help file missing\\n\\nExpected at:\\n\\n```\\n%s\\n```\\n\\n%s',
     },
     'pl': {
+        'persona':       'PERSONA',
+        'speaker':       'M\u00f3wca / akcent',
+        'persona_set':   'persona: %s',
+        'spk_none':      '(jeden g\u0142os)',
         'title':         'VoiceRP',
         'help_title':    'VoiceRP – ustawienia i zalecenia',
         'out_lang':      'JĘZYK WYJŚCIOWY',

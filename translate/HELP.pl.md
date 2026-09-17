@@ -85,6 +85,67 @@ dla tajskiego. Zapisane w `translate/langs_broken.json`.
 
 ---
 
+## 2b. Persony
+
+Persona to nie inny jezyk - to inna osoba mowiaca w jezyku, ktory juz
+wybrales. Dzialaja dwa mechanizmy, ktore sie nakladaja.
+
+**Archetypy** dzialaja we wszystkich 37 jezykach, bo kształtuja ten glos,
+ktory dany jezyk ma: tempo i zmiennosc przez wlasne `length_scale`,
+`noise_scale` i `noise_w_scale` Pipera, a potem wysokosc i barwe radiowa przez
+`dsp.py`. W `personas.json` jest ich trzynascie:
+
+| Persona | Co robi |
+|---|---|
+| Neutralny | ustawienia domyslne Pipera - punkt odniesienia |
+| Radiooperator | pasmo 350-3200 Hz; samo pasmo brzmi jak radio |
+| Podoficer | szybko, malo zmiennosci, nieco nizej, radio |
+| Oficer | powoli i nisko, bez radia, do rozmowy twarza w twarz |
+| Zgorzknialy weteran | -4 poltony, najglebiej jak jeszcze brzmi po ludzku |
+| Stary rolnik | powoli i rozwlekle; wysokie `noise_w` daje ten niepospieszny ton |
+| Mlody rekrut | wyzej i mniej kontrolowanie |
+| Spanikowany | szybko i poszarpanie - cywil pod ostrzalem |
+| Ranny | powoli i cicho, wiec mniej sie niesie |
+| Szept (CQB) | sam poziom, poza niemieckim, ktory ma prawdziwy szept |
+| Daleki zasieg | 450-2800 Hz mocno przesterowane, celowo tandetne |
+| Pijany cywil | rozwlekle; niemiecki ma prawdziwe nagranie pijanego |
+| Wsciekly | szybko i glosno; niemiecki ma prawdziwe nagranie zlosci |
+
+Edytuj `personas.json`, aby dodac wlasne - plik czytany jest przy starcie, bez
+zmian w kodzie. `length_scale` powyzej 1 to wolniej, `pitch` jest w poltonach
+i ujemny znaczy glebiej. Ponizej okolo -5 poltonow przestaje brzmiec ludzko.
+
+**Mowcy i akcenty** to dodatek: niektore modele Pipera zawieraja wielu
+wytrenowanych mowcow w jednym pliku, wybieranych przy syntezie.
+`getpersona.py` sciaga te przydatne, po 77 MB:
+
+| Model | Co zawiera |
+|---|---|
+| `en_US-libritts_r-medium` | **904** mowcow amerykanskich - najwiekszy wybor barw i wieku |
+| `en_GB-vctk-medium` | **109** mowcow brytyjskich, szkockich, irlandzkich i regionalnych |
+| `de_DE-mls-medium` | **236** mowcow niemieckich |
+| `fr_FR-mls-medium` | **125** mowcow francuskich |
+| `en_US-l2arctic-medium` | **24** obcokrajowcow: akcent arabski, mandarynski, hindi, koreanski, hiszpanski i wietnamski w angielskim |
+| `de_DE-thorsten_emotional-medium` | **8** wykonan jednego mowcy - identyfikatory *sa* emocjami: zlosc, rozbawienie, obrzydzenie, pijany, senny, zdziwienie, szept, neutralny |
+
+Caly katalog Pipera zawiera **2712** roznych mowcow w 176 modelach. Pole
+"Mowca / akcent" w GUI je wypisuje, pogrupowane tam gdzie grupa jest znana,
+i jest wyszarzone dla jezyka z jednym glosem.
+
+Oceniaj sluchem, nie tabelka. `make_samples.py` sklada arkusz odsluchowy,
+w ktorym kazda probka jest zapowiedziana numerem:
+
+```powershell
+python make_samples.py --lang en
+python make_samples.py --lang ru
+python make_samples.py --speakers en_US-l2arctic-medium
+python make_samples.py --speakers en_US-libritts_r-medium --limit 24
+```
+
+Przypisanie akcentow w L2-ARCTIC pochodzi z listy mowcow samego zbioru, a nie
+z odsluchu - jesli ktorys brzmi inaczej niz etykieta, zaufaj uszom i popraw go
+w `personas.json`.
+
 ## 3. Poziom mikrofonu – ustawienie, które psuje wszystko
 
 Patrz na `szczyt wejścia` po każdym puszczeniu klawisza.

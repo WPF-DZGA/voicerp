@@ -158,6 +158,29 @@ pip install -r requirements-slim.txt --no-deps   # --no-deps, or argos re-drags 
 pip install -r requirements-slim.txt
 ```
 
+## Personas
+
+13 archetypes in `translate/personas.json` - radio operator, clipped NCO, calm
+officer, gruff veteran, old farmer, young recruit, panicked, wounded, CQB
+whisper, long range, drunk, angry - built from Piper's `length_scale` /
+`noise_scale` / `noise_w_scale` plus pitch and radio colouring in
+`translate/dsp.py`. They apply to **all 37 languages**, because they shape
+whatever voice the language has rather than needing a model of their own.
+
+On top of that, `translate/getpersona.py` fetches the multi-speaker models:
+**904** American speakers in one 79 MB file, 109 British and regional, 236
+German, 125 French, 24 non-native English accents (Arabic, Mandarin, Hindi,
+Korean, Spanish, Vietnamese), and 8 emotional deliveries in German where the
+speaker ids *are* the emotions. The catalogue holds 2712 distinct speakers in
+total.
+
+`translate/make_samples.py` renders an audition sheet with every sample
+announced by number, because this is a judgement to make by ear.
+
+The DSP is numpy only - no scipy, no librosa, keeping the slim install slim.
+Pitch shifting is a phase vocoder, measured accurate to 0.3% over +-5
+semitones with the duration unchanged and no clicks.
+
 ## Hardware this was built and measured on
 
 - RTX 4080, i9-13900KF, 64 GB - whisper on the GPU at ~140-250 ms

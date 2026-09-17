@@ -87,6 +87,67 @@ segmenter. See `translate/langs_broken.json`.
 
 ---
 
+## 2b. Personas
+
+A persona is not a different language - it is a different person speaking the
+language you already picked. Two mechanisms stack.
+
+**Archetypes** work in all 37 languages, because they shape whatever voice the
+language has: speed and variation through Piper's own `length_scale`,
+`noise_scale` and `noise_w_scale`, then pitch and radio colour through
+`dsp.py`. Thirteen ship in `personas.json`:
+
+| Persona | What it does |
+|---|---|
+| Neutral | Piper's defaults - the baseline |
+| Radio operator | band-limited to 350-3200 Hz; the band alone reads as a radio |
+| NCO, clipped | fast, low variation, slightly deep, radio |
+| Officer, calm | deliberate and deep, no radio, for face to face |
+| Gruff veteran | -4 semitones, the deepest that still sounds human |
+| Old farmer | slow and wandering; high `noise_w` is what makes it unhurried |
+| Young recruit | higher and less controlled |
+| Panicked | fast and ragged - a civilian under fire |
+| Wounded | slow and quiet, so it carries less |
+| Whisper, CQB | level-only whisper, except in German which has a real one |
+| Long range | 450-2800 Hz driven hard, deliberately trashy |
+| Drunk civilian | rambling; German has an actual drunk recording |
+| Angry | fast and loud; German has an actual angry recording |
+
+Edit `personas.json` to add your own - it is read at startup, no code change.
+`length_scale` above 1 is slower, `pitch` is semitones and negative is deeper.
+Past about -5 semitones it stops sounding human.
+
+**Speakers and accents** are the bonus: some Piper models carry many trained
+speakers in one file, chosen at synthesis time. `getpersona.py` fetches the
+useful ones, 77 MB each:
+
+| Model | What is in it |
+|---|---|
+| `en_US-libritts_r-medium` | **904** American speakers - the widest choice of ages and timbres |
+| `en_GB-vctk-medium` | **109** British, Scottish, Irish and regional speakers |
+| `de_DE-mls-medium` | **236** German speakers |
+| `fr_FR-mls-medium` | **125** French speakers |
+| `en_US-l2arctic-medium` | **24** non-native speakers: Arabic, Mandarin, Hindi, Korean, Spanish and Vietnamese accents in English |
+| `de_DE-thorsten_emotional-medium` | **8** deliveries of one speaker - the ids *are* the emotions: angry, amused, disgusted, drunk, sleepy, surprised, whisper, neutral |
+
+The whole Piper catalogue holds **2712** distinct speakers across 176 models.
+The Speaker / accent box in the GUI lists them, grouped where the group is
+known, and greys out for a single-voice language.
+
+Judge by ear, not by the table. `make_samples.py` renders an audition sheet
+with each sample announced by number:
+
+```powershell
+python make_samples.py --lang en
+python make_samples.py --lang ru
+python make_samples.py --speakers en_US-l2arctic-medium
+python make_samples.py --speakers en_US-libritts_r-medium --limit 24
+```
+
+The L2-ARCTIC accent grouping comes from the dataset's own speaker list, not
+from listening - if a speaker sounds wrong for its label, trust your ears and
+move it in `personas.json`.
+
 ## 3. Microphone level - the setting that breaks everything
 
 Watch `input peak` after each release.
