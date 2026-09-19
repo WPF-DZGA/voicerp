@@ -1,5 +1,9 @@
 # VoiceRP
 
+**[▶ Strona aplikacji / App page: wpf-dzga.github.io/voicerp](https://wpf-dzga.github.io/voicerp/)** · **[⬇ Download VoiceRP-Setup-1.0.0.exe](https://github.com/WPF-DZGA/voicerp/releases/latest/download/VoiceRP-Setup-1.0.0.exe)**
+
+[![VoiceRP video](docs/media/voicerp-pl.jpg)](https://wpf-dzga.github.io/voicerp/)
+
 Local, offline voice changer and push-to-talk speech translation for milsim
 roleplay. Built for **ARMA OVER ALL** (Arma Reforger VON), but the output is the
 Windows default microphone, so it works in Discord, Teams, OBS or a browser too.

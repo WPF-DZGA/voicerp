@@ -33,3 +33,5 @@ bootstrap-*.log
 translate/samples/
 persona.out
 persona.err
+
+brag-output/

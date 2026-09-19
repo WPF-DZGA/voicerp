@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VoiceRP — tłumacz głosu i zmieniacz głosu do Milsim RP</title>
+<meta name="description" content="Trzymasz F9, mówisz po polsku lub angielsku, drużyna słyszy jeden z 37 języków ok. 0,65 s później. Offline, bez kluczy API. Zbudowane dla ARMA OVER ALL.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="VoiceRP — Twoje słowa. Ich język. Twój PC.">
+<meta property="og:description" content="Push-to-talk tłumaczenie mowy na 37 języków i zmieniacz głosu do Arma Reforger. Działa w 100% lokalnie.">
+<meta property="og:url" content="https://wpf-dzga.github.io/voicerp/">
+<meta property="og:image" content="https://wpf-dzga.github.io/voicerp/media/voicerp-pl.jpg">
+<meta property="og:video" content="https://wpf-dzga.github.io/voicerp/media/voicerp-pl.mp4">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1b1d21">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231b1d21'/%3E%3Cpath d='M20 38V26h6l10-8v28l-10-8z' fill='%234da3ff'/%3E%3Cpath d='M42 24c3 2.5 3 13.5 0 16M47 20c5 4 5 20 0 24' stroke='%235dd47f' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#1b1d21;--panel:#24272c;--line:#33373e;--fg:#e6e6e6;--dim:#9aa0a8;--acc:#4da3ff;--ok:#5dd47f;--rec:#ff6b6b;--warn:#ffc15e;
+  --sans:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;--mono:Consolas,"JetBrains Mono",ui-monospace,monospace;}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.6 var(--sans);}
+a{color:var(--acc)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+nav{position:sticky;top:0;z-index:5;background:rgba(27,29,33,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;gap:22px;height:56px;overflow-x:auto;white-space:nowrap}
+nav b{font-size:19px;margin-right:auto}nav b span{color:var(--acc)}
+nav a{color:var(--dim);text-decoration:none;font-size:15px}nav a:hover{color:var(--fg)}
+header{padding:64px 0 28px}
+.kicker{font:13px var(--mono);letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+h1{font-size:clamp(40px,7vw,72px);line-height:1.02;margin:12px 0 16px;letter-spacing:-.01em}
+h1 span{color:var(--acc)}
+.lead{font-size:20px;color:#cfd3d8;max-width:760px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:26px 0 10px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:13px 22px;border-radius:8px;font-weight:600;text-decoration:none;border:1px solid var(--line);color:var(--fg);background:var(--panel)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:#0d1117}
+.btn small{font-weight:400;opacity:.8}
+.note{font-size:14px;color:var(--dim)}
+video{width:100%;border-radius:12px;display:block;background:#000;border:1px solid var(--line);margin-top:28px}
+.vlinks{font-size:14px;color:var(--dim);margin-top:10px}
+section{padding:80px 0 8px}
+h2{font-size:30px;margin:0 0 6px}
+h2 small{display:block;font:13px var(--mono);letter-spacing:.14em;color:var(--acc);text-transform:uppercase;margin-bottom:6px}
+h3{font-size:19px;margin:0 0 6px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+.card p{margin:0;color:#cfd3d8}
+.big{font-size:40px;white-space:nowrap;font-weight:700;line-height:1}
+.big+div{color:var(--acc);font-weight:600;margin-top:6px}
+.stats{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-top:20px}
+pre,code{font-family:var(--mono)}
+pre{background:#15171a;border:1px solid var(--line);border-radius:8px;padding:16px;overflow-x:auto;font-size:14px;line-height:1.5;color:#b9d8ff}
+code{background:#15171a;padding:1px 6px;border-radius:4px;font-size:.92em}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin-top:14px;font-size:15px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--dim);font-weight:600}
+.tw{overflow-x:auto}
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:20px 0 0}
+ol.steps>li{counter-increment:s;position:relative;padding:0 0 22px 52px}
+ol.steps>li:before{content:counter(s);position:absolute;left:0;top:0;width:34px;height:34px;border-radius:50%;background:var(--panel);border:1px solid var(--acc);color:var(--acc);display:grid;place-items:center;font-weight:700}
+.warn{border-left:3px solid var(--warn);background:#2a261d;padding:14px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+.shot{width:100%;border-radius:10px;border:1px solid var(--line);display:block;margin-top:20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 14px;font-size:15px}
+.langs{columns:3 160px;font-size:15px;color:#cfd3d8;margin-top:14px}
+details{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-top:10px}
+summary{cursor:pointer;font-weight:600}
+footer{margin-top:64px;padding:28px 0 48px;border-top:1px solid var(--line);color:var(--dim);font-size:14px}
+.kbd{display:inline-block;min-width:34px;text-align:center;font:600 14px var(--mono);padding:3px 8px;border:1px solid #4a4f58;border-bottom-width:3px;border-radius:6px;background:#2b2f35}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <b>Voice<span>RP</span></b>
+  <a href="#instalacja">Instalacja</a><a href="#wymagania">Wymagania</a><a href="#ustawienia">Ustawienia</a>
+  <a href="#jezyki">Języki</a><a href="#problemy">Problemy</a>
+  <a href="https://github.com/WPF-DZGA/voicerp">GitHub</a>
+</div></nav>
+
+<header class="wrap">
+  <div class="kicker">ARMA OVER ALL · Milsim RP · wersja 1.0.0</div>
+  <h1>Twoje słowa.<br><span>Ich język.</span> Twój PC.</h1>
+  <p class="lead">Trzymasz <span class="kbd">F9</span>, mówisz po polsku albo angielsku — a na VON słychać rosyjski, ukraiński albo jeden z 37 języków, ok. 0,65 s później. Plus zmieniacz głosu na żywo. Wszystko działa lokalnie: bez kluczy API, bez opłat, żaden dźwięk nie wychodzi z komputera.</p>
+  <div class="cta">
+    <a class="btn primary" href="https://github.com/WPF-DZGA/voicerp/releases/latest/download/VoiceRP-Setup-1.0.0.exe">⬇ Pobierz instalator <small>Windows 10/11 · 2,2 MB</small></a>
+    <a class="btn" href="https://github.com/WPF-DZGA/voicerp">Kod źródłowy</a>
+    <a class="btn" href="https://github.com/WPF-DZGA/voicerp/releases">Wszystkie wydania</a>
+  </div>
+  <div class="note">Instalator pobiera modele przy pierwszym uruchomieniu (ok. 1–3,5 GB zależnie od wybranych języków). Nie jest podpisany — patrz <a href="#instalacja">krok 2</a>.</div>
+  <video controls preload="metadata" poster="media/voicerp-pl.jpg">
+    <source src="media/voicerp-pl.mp4" type="video/mp4">
+  </video>
+  <div class="vlinks">Wersja angielska: <a href="media/voicerp-en.mp4">voicerp-en.mp4</a></div>
+</header>
+
+<section class="wrap">
+  <h2><small>Co to jest</small>Dwa narzędzia, jeden wirtualny kabel</h2>
+  <div class="grid">
+    <div class="card"><h3>🎙 Tłumacz push-to-talk</h3><p>Mówisz po polsku lub angielsku, oni słyszą jeden z 37 języków. Rozpoznawanie mowy (faster-whisper), tłumaczenie (Argos) i synteza (Piper) na Twojej karcie graficznej.</p></div>
+    <div class="card"><h3>🎭 Zmieniacz głosu</h3><p>Twoje słowa, czyjś inny głos — w czasie rzeczywistym (RVC przez VCClient), ok. 190 ms opóźnienia. Np. męski → żeński do odgrywania postaci.</p></div>
+    <div class="card"><h3>📻 13 profili głosu</h3><p>Radiooperator, podoficer, zgorzkniały weteran, spanikowany, ranny, szept w budynku, słaby sygnał… Działają w każdym z 37 języków.</p></div>
+  </div>
+  <div class="stats">
+    <div class="card"><div class="big">37</div><div>języków wyjściowych</div></div>
+    <div class="card"><div class="big">~650 ms</div><div>od mikrofonu do radia</div></div>
+    <div class="card"><div class="big">0</div><div>kluczy API i opłat</div></div>
+    <div class="card"><div class="big">100%</div><div>offline po instalacji</div></div>
+  </div>
+  <img class="shot" src="media/gui_pl.png" alt="Okno VoiceRP w wersji polskiej: lista języków, kierowanie sygnału, log">
+  <p class="note">Interfejs po polsku lub angielsku, przełączany na żywo. Działa w Arma Reforger, Discordzie, Teams, OBS i przeglądarce — bo wyjściem jest domyślny mikrofon Windows.</p>
+</section>
+
+<section class="wrap" id="wymagania">
+  <h2><small>Wymagania</small>Czy mój komputer to uciągnie?</h2>
+  <p>Zmierzone, nie szacowane. Liczy się gra <em>i</em> VoiceRP naraz:</p>
+  <div class="tw"><table>
+    <tr><th></th><th>Minimum (gra + tłumaczenie)</th><th>Komfortowo</th></tr>
+    <tr><td>System</td><td>Windows 10 / 11, 64-bit</td><td>Windows 11</td></tr>
+    <tr><td>Karta graficzna</td><td>6 GB VRAM (GTX 1660 Super, RTX 2060)</td><td>8–12 GB (RTX 3060, RTX 4060)</td></tr>
+    <tr><td>Procesor</td><td>6 rdzeni</td><td>8 rdzeni lub więcej</td></tr>
+    <tr><td>RAM</td><td><b>16 GB</b></td><td>32 GB</td></tr>
+    <tr><td>Dysk</td><td>25 GB wolnego, SSD</td><td>SSD</td></tr>
+    <tr><td>Dodatkowo</td><td colspan="2">Mikrofon, internet do instalacji, <a href="https://vb-audio.com/Cable/">VB-Audio Virtual Cable</a> (darmowy)</td></tr>
+  </table></div>
+  <p class="note">VoiceRP zużywa ok. 1 GB VRAM i 0,9–2,4 GB RAM. Karta 4 GB albo brak GPU: tłumaczenie działa na procesorze, ok. 1,2 s na zdanie zamiast 0,2 s. Pierwsze zdanie w nowym języku trwa 2–3,5 s (ładowanie modelu).</p>
+</section>
+
+<section class="wrap" id="instalacja">
+  <h2><small>Instalacja</small>Od zera do pierwszego zdania: ok. 15 minut</h2>
+  <ol class="steps">
+    <li><h3>Zainstaluj VB-Audio Virtual Cable</h3>Pobierz z <a href="https://vb-audio.com/Cable/">vb-audio.com/Cable</a>, uruchom <code>VBCABLE_Setup_x64.exe</code> jako administrator, zrestartuj PC. To „kabel”, którym VoiceRP wysyła głos do gry.</li>
+    <li><h3>Uruchom instalator VoiceRP</h3><a href="https://github.com/WPF-DZGA/voicerp/releases/latest/download/VoiceRP-Setup-1.0.0.exe">VoiceRP-Setup-1.0.0.exe</a>. Windows pokaże „System Windows ochronił ten komputer” — kliknij <b>Więcej informacji → Uruchom mimo to</b>. Instalator nie jest podpisany, bo to narzędzie społeczności.</li>
+    <li><h3>Wybierz języki i GPU</h3>Kreator pokazuje rozmiar pobierania przed startem. Na początek wystarczą: <b>ru, uk, pl, en</b>. Karta NVIDIA → zaznacz CUDA. Języki dodasz później przez <code>voicerp-setup.bat</code>.</li>
+    <li><h3>Poczekaj na pobieranie</h3>Otworzy się konsola z postępem pip — Python, biblioteki i modele z python.org, PyPI i Hugging Face. 5–20 min zależnie od łącza.</li>
+    <li><h3>Uruchom VoiceRP z menu Start</h3>Poczekaj na <code>models ready</code> w logu (30–45 s). Wybierz mikrofon, język wyjściowy, trzymaj <span class="kbd">F9</span>, powiedz jedno zdanie. <b>Test głosu</b> sprawdza trasę bez mówienia.</li>
+  </ol>
+</section>
+
+<section class="wrap" id="ustawienia">
+  <h2><small>Ustawienia</small>Trzy rzeczy, które psują wszystko</h2>
+  <div class="grid">
+    <div class="card"><h3>1. Windows: wyłącz ulepszenia audio</h3><p>Ustawienia → System → Dźwięk → Wejście → Twój mikrofon → <b>Ulepszenia dźwięku = Wyłączone</b>. „Voice Clarity” potrafi wyciszyć mikrofon do zera.</p></div>
+    <div class="card"><h3>2. Poziom mikrofonu</h3><p>Szczyt wejścia w logu między <b>-30 a -6 dB</b>. Powyżej 0 dB = przester i whisper wymyśla całe zdania. Za cicho = nic nie słyszy.</p></div>
+    <div class="card"><h3>3. Discord: bez Krisp</h3><p>Redukcja szumów = <b>Brak</b>, AGC i echo off. Krisp tnie syntetyczną mowę na kawałki.</p></div>
+  </div>
+  <h3 style="margin-top:28px">Żeby gra słyszała tłumaczenie</h3>
+  <p>Arma Reforger nie ma wyboru mikrofonu — bierze domyślne <b>urządzenie komunikacyjne</b> Windows. Ustaw je na <code>CABLE Output</code> (Panel dźwięku → Nagrywanie → CABLE Output → „Ustaw jako domyślne urządzenie komunikacyjne”). W Discordzie możesz dalej używać swojego prawdziwego mikrofonu.</p>
+<pre><code>mikrofon ──► VoiceRP (whisper → Argos → Piper) ──► CABLE Input
+                                                      │
+                               CABLE Output = mikrofon Windows
+                                                      │
+                          Arma Reforger VON · Discord · OBS</code></pre>
+  <h3>Klawisze</h3>
+  <div class="tw"><table>
+    <tr><td><span class="kbd">F9</span></td><td>trzymaj, żeby mówić</td></tr>
+    <tr><td><span class="kbd">F3</span></td><td>następny język docelowy (wszystkie 37)</td></tr>
+    <tr><td><span class="kbd">F1</span></td><td>język źródłowy: angielski → polski → auto</td></tr>
+    <tr><td><span class="kbd">F5</span> <span class="kbd">F4</span> <span class="kbd">F6</span> <span class="kbd">F7</span> <span class="kbd">F8</span> <span class="kbd">F2</span></td><td>rosyjski / ukraiński / hiszpański / francuski / polski / angielski</td></tr>
+    <tr><td><span class="kbd">F11</span></td><td>lista języków i stan</td></tr>
+  </table></div>
+</section>
+
+<section class="wrap" id="jezyki">
+  <h2><small>Języki i głosy</small>37 języków wyjściowych</h2>
+  <p>Wejście: polski lub angielski (polski tłumaczony przez angielski). Wyjście:</p>
+  <div class="langs">
+    albański · angielski · arabski · baskijski · bengalski · bułgarski · chiński · czeski · duński · estoński · fiński · francuski · grecki · hebrajski · hindi · hiszpański · holenderski · indonezyjski · kataloński · koreański · łotewski · niemiecki · norweski · perski · polski · portugalski · rosyjski · rumuński · słowacki · słoweński · szwedzki · turecki · ukraiński · urdu · węgierski · wietnamski
+  </div>
+  <p class="note">Brak japońskiego i tajskiego — silnik mowy Piper ich nie obsługuje. Tam, gdzie Piper nie ma żeńskiego głosu (m.in. niemiecki, portugalski, arabski), głos jest męski.</p>
+  <h3 style="margin-top:22px">Profile głosu</h3>
+  <div class="chips">
+    <span class="chip">Neutralny</span><span class="chip">Radiooperator</span><span class="chip">Podoficer, urywany</span><span class="chip">Oficer, spokojny</span><span class="chip">Zgorzkniały weteran</span><span class="chip">Stary rolnik</span><span class="chip">Młody rekrut</span><span class="chip">Spanikowany</span><span class="chip">Ranny</span><span class="chip">Szept, walka w budynku</span><span class="chip">Daleki zasięg, zły sygnał</span><span class="chip">Pijany cywil</span><span class="chip">Wściekły</span>
+  </div>
+</section>
+
+<section class="wrap" id="problemy">
+  <h2><small>Rozwiązywanie problemów</small>Objaw → przyczyna</h2>
+  <div class="tw"><table>
+    <tr><th>Objaw</th><th>Przyczyna</th><th>Co zrobić</th></tr>
+    <tr><td>W logu <code>-120 dB</code>, cisza</td><td>Voice Clarity albo mikrofon wyciszony</td><td>Wyłącz ulepszenia dźwięku; sprawdź przycisk MUTE/gałkę na mikrofonie</td></tr>
+    <tr><td>Transkrypcja nie ma nic wspólnego z tym, co mówisz</td><td>Przesterowany mikrofon</td><td>Zmniejsz poziom nagrywania do -30…-6 dB</td></tr>
+    <tr><td>Nic nie usłyszał, poziom OK</td><td>Za krótka wypowiedź</td><td>Powiedz pełne zdanie</td></tr>
+    <tr><td>Inni słyszą poszatkowane</td><td>Krisp / AGC w Discordzie</td><td>Wyłącz redukcję szumów</td></tr>
+    <tr><td>Inni słyszą Cię podwójnie</td><td>Zmieniacz głosu też pisze do kabla</td><td>Zamknij VCClient, gdy używasz tylko tłumacza</td></tr>
+    <tr><td><code>whisper on cpu</code> w logu</td><td>CUDA się nie załadowała</td><td>Działa, tylko wolniej (~1,2 s). Przeinstaluj z opcją CUDA</td></tr>
+  </table></div>
+  <details><summary>Dodanie języków po instalacji</summary>
+<pre><code>%LOCALAPPDATA%\VoiceRP\voicerp-setup.bat -Languages ru,uk,pl,cs -Sources en,pl -Cuda
+%LOCALAPPDATA%\VoiceRP\voicerp-setup.bat -AllLanguages</code></pre>
+    Ponowne uruchomienie jest bezpieczne — pobiera tylko to, czego brakuje.</details>
+  <details><summary>Gdzie to się instaluje i jak usunąć</summary>Wszystko w <code>%LOCALAPPDATA%\VoiceRP</code> (na użytkownika, bez uprawnień administratora). Odinstalowanie: Ustawienia → Aplikacje → VoiceRP. Nie rusza Twojego Pythona ani PATH.</details>
+  <details><summary>Zmieniacz głosu (RVC)</summary>Zmieniacz głosu używa VCClient (w-okada, MIT) i osobnych modeli RVC — instrukcja w <a href="https://github.com/WPF-DZGA/voicerp/blob/main/AGENT.md">AGENT.md</a>. Nie używaj modelu sklonowanego z głosu prawdziwej osoby bez jej zgody.</details>
+  <details><summary>Instalacja ze źródeł / przez agenta AI</summary>Plik <a href="https://github.com/WPF-DZGA/voicerp/blob/main/AGENT.md">AGENT.md</a> jest napisany tak, żeby agent AI z dostępem do terminala (Claude, Codex) postawił całość sam. Pełna lista ustawień: <a href="https://github.com/WPF-DZGA/voicerp/blob/main/translate/HELP.pl.md">HELP.pl.md</a>.</details>
+  <details><summary>Zgłaszanie błędów</summary>Załóż <a href="https://github.com/WPF-DZGA/voicerp/issues">issue na GitHubie</a> albo napisz na Discordzie Dziupli. Dołącz ostatnie ~20 linii logu z okna aplikacji.</details>
+</section>
+
+<footer class="wrap">
+  VoiceRP 1.0.0 · licencja MIT · zbudowane dla <b>ARMA OVER ALL</b> / Dziupla Gier.<br>
+  Korzysta z: faster-whisper (MIT), Argos Translate (MIT), Piper + głosy (MIT / wg głosu), VCClient (MIT). VB-Audio Virtual Cable to donationware, nie jest dystrybuowany w paczce.
+</footer>
+</body>
+</html>
